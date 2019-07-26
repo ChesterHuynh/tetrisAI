@@ -1,6 +1,5 @@
 import pygame
 import random
-import pdb
 
 class Piece:
     colors = [

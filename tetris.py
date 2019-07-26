@@ -1,11 +1,14 @@
 import pygame
-import piece
 import random
-import copy
-import pdb
+import piece
 
 class TetrisGame:
-    colors = [
+    grid_colors = {'white': (255, 255, 255), \
+              'grey': (128, 128, 128), \
+              'black': (0, 0, 0)
+              }
+
+    piece_colors = [
         (128, 128, 128),
         (255, 0,   0  ),
         (0,   150, 0  ),
@@ -38,7 +41,7 @@ class TetrisGame:
          [7, 7, 7]]
     ]
 
-    def __init__(self, height=16, width=10, block_size=35, gridline=1, gameover=False):
+    def __init__(self, height=16, width=10, block_size=35, gridline=1, gameover=False, score=0, lines_cleared=0, level=0):
         """
         Initialize a tetris board
         :param height: how many blocks tall the tetris board should be
@@ -46,6 +49,9 @@ class TetrisGame:
         :param block_size: how many pixels each block is comprised of
         :param gridline: width of gridlines in pixels
         :param gameover: gameover status
+        :param score: current score
+        :param lines_cleared: current number of lines cleared
+        :param level: current level
 
         :type height: int
         :type width: int
@@ -59,6 +65,9 @@ class TetrisGame:
         self.block_size = block_size
         self.gridline = gridline
         self.gameover = gameover
+        self.score = score
+        self.lines_cleared = lines_cleared
+        self.level = level
         self.piece = piece.Piece(x=3, y=0, block_size=self.block_size, gridline=self.gridline)
         self.board = []
         for y in range(height):
@@ -213,6 +222,51 @@ class TetrisGame:
                 self.board[self.piece.y + y - 1][self.piece.x + x] += self.piece.piece[y][x]
         self.new_piece()
 
+    def update_metrics(self, screen, num_rows_deleted, config):
+        """
+        Update the score, number of lines cleared, and level after lines have
+        been cleared.
+        :param screen: PyGame Surface object that we will be writing the
+                       metrics onto
+        :param num_rows_deleted: Number of lines just recently cleared
+        :param config: Configurations of the game
+
+        :type screen: PyGame Surface
+        :type num_rows_deleted: int
+        :type config: dict
+        """
+        self.score += (level // 2 + 1) * points_per_line[num_rows_deleted-1]
+        self.lines_cleared += num_rows_deleted
+        self.level = self.lines_cleared // 12 # Bump level every 12 lines
+
+    def show_metrics(self, screen, config, text_size=24):
+        """
+        Display the current metrics on the game window
+        :param screen: PyGame Surface object that we will be writing the
+                       metrics onto
+        :param text_size: Size of the text on game window
+
+        :type screen: PyGame Surface
+        :type text_size: int
+        """
+        font = pygame.font.Font(pygame.font.get_default_font(), text_size)
+
+        # Render surfaces
+        score_surface = font.render("Score: " + str(self.score), True, self.grid_colors['white'])
+        lines_cleared_surface = font.render("Lines Cleared: "+str(self.lines_cleared), True, self.grid_colors['white'])
+        level_surface = font.render("Level: " + str(self.level), True, self.grid_colors['white'])
+
+        # Get rect objects
+        score_rect = score_surface.get_rect(centerx=(config['block_size'] + config['gridline']) * (config['width'] + 3), centery = (config['block_size'] + config['gridline']) * (1))
+        lines_cleared_rect = lines_cleared_surface.get_rect(centerx=(config['block_size'] + config['gridline']) * (config['width'] + 3), centery = (config['block_size'] + config['gridline']) * (2))
+        level_rect = level_surface.get_rect(centerx=(config['block_size'] + config['gridline']) * (config['width'] + 3), centery = (config['block_size'] + config['gridline']) * (3))
+
+        screen.blit(score_surface, score_rect)
+        screen.blit(lines_cleared_surface, lines_cleared_rect)
+        screen.blit(level_surface, level_rect)
+
+        pygame.display.update()
+
     def draw(self, screen):
         """
         Displays the tetris board onto the actual screen.
@@ -222,4 +276,4 @@ class TetrisGame:
         for y in range(len(self.board)):
             for x in range(len(self.board[y])):
                 rect = pygame.Rect((self.block_size + self.gridline) * x, (self.block_size + self.gridline) * y, self.block_size, self.block_size)
-                pygame.draw.rect(screen, self.colors[self.board[y][x]], rect)
+                pygame.draw.rect(screen, self.piece_colors[self.board[y][x]], rect)
