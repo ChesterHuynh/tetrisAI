@@ -1,94 +1,76 @@
-import pygame
+from tetris import Tetris
+from DQN import DQNAgent, ModifiedTensorBoard
+from datetime import datetime
+from statistics import mean, median
+from tqdm import tqdm
 import random
-import sys
-from time import time
+import pdb
 
-import tetris
 
-points_per_line = [100, 400, 900, 2000]
-colors = {'white': (255, 255, 255), \
-          'grey': (128, 128, 128), \
-          'black': (0, 0, 0)
-          }
+def run_game():
+    env = Tetris()
+    episodes = 5000
+    max_steps = None
+    replay_mem_size = 20000
+    minibatch_size = 64
+    epsilon = 0.9
+    epsilon_min = 1e-3
+    epsilon_decay = 0.9975
+    learning_rate = 1e-3
+    epochs = 1
+    show_every = 50
+    log_every = 50
+    replay_start_size = 2000
+    train_every = 1
+    hidden_dims = [64, 32]
+    activations = ['relu', 'relu', 'linear']
 
-config = {'height': 20, # height: number of squares in a column of the grid
-          'width': 10, # width: number of squares in a row of the grid
-          'gridline': 1, # gridline: width of gridlines in number of pixels
-          'block_size': 35, # block_size: number of pixels for each square in game grid
-          'speed': [2, 2], # speed: speed of gameplay
-          'move_buffer': 0.05, # move_buffer: seconds between accepting user input
-          'gravity_buffer': 1000#  gravity_buffer: msecs between when block will be pushed down
-          }
+    agent = DQNAgent(env.get_state_size(), replay_mem_size=replay_mem_size, \
+                   minibatch_size=minibatch_size, epsilon=epsilon, \
+                   epsilon_min=epsilon_min, epsilon_decay=epsilon_decay, \
+                   learning_rate=learning_rate, hidden_dims=[64,32], \
+                   activations=activations, replay_start_size=replay_start_size)
 
-def run_game(config):
-    """
-    Runs the full tetris game until gameover status is True. Gameover is only
-    achieved when a new block no longer fits on a screen.
+    log_dir = f'log/tetris-{datetime.now().strftime("%Y%m%d-%H%M%S")}-nn={str(hidden_dims)}-mem={replay_mem_size}-bs={minibatch_size}-epochs={epochs}'
+    log = ModifiedTensorBoard(log_dir=log_dir)
 
-    :param config: Configurations for the tetris game display
-    :type config: dict
-    """
-    pygame.init()
+    scores = []
+    for episode in tqdm(range(episodes)):
+        current_state = env.reset_game()
+        done = False
+        steps = 0
 
-    # Game window initialization
-    window_width = (config['block_size'] + config['gridline']) * \
-                    config['width'] + 6 * (config['block_size'] + \
-                    config['gridline'])
-    window_height = (config['block_size'] + config['gridline']) * \
-                     config['height']
-    window_size = window_width, window_height
-    screen = pygame.display.set_mode(window_size)
-    screen.fill(colors['black'])
-    pygame.display.set_caption("TETRIS")
+        if show_every and episode % show_every == 0:
+            show = True
+        else:
+            show = False
 
-    # Set up gravity
-    APPLY_GRAVITY_EVENT = pygame.USEREVENT+1 # event to trigger gravity event
-    last_time = time()
-    pygame.time.set_timer(APPLY_GRAVITY_EVENT, config['gravity_buffer'])
+        while not done and (not max_steps or steps < amx_steps):
+            next_states = env.get_next_states()
+            best_state = agent.best_state(next_states.values())
 
-    # Initialize pertinant game variables
-    board = tetris.TetrisGame(height=config['height'], width=config['width'], \
-                              block_size=config['block_size'], gridline=config['gridline'], gameover=False)
-    level = score = lines_cleared = 0
+            best_action = None
+            for action, state in next_states.items():
+                if state == best_state:
+                    best_action = action
+                    break
 
-    board.show_metrics(screen, config)
-    while not board.gameover:
-        config['gravity_buffer'] /= (1 + level//10)
-        screen.fill(colors['black'])
+            reward, done = env.play_game(best_action[0], best_action[1], show=show)
 
-        # Show HEIGHT x WIDTH grid and the active block
-        board.draw(screen)
-        board.piece.draw(screen)
+            agent.update_replay_memory(current_state, next_states[best_action], reward, done)
+            current_state = next_states[best_action]
+            steps += 1
+        scores.append(env.get_game_score())
 
-        board.show_metrics(screen, config)
+        if episode % train_every == 0:
+            agent.train(minibatch_size=minibatch_size, epochs=epochs)
 
-        keys = pygame.key.get_pressed()
-        # Add delay between function calls
-        if time() - last_time > config['move_buffer']:
-            if (keys[pygame.K_DOWN] or keys[pygame.K_s]):
-                num_rows_deleted = board.accelerate()
-                if num_rows_deleted > 0:
-                    board.update_metrics(screen, num_rows_deleted, config)
-            last_time = time()
+        if log_every and episode % log_every == 0:
+            avg_score = mean(scores[-log_every:])
+            min_score = min(scores[-log_every:])
+            max_score = max(scores[-log_every:])
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                board.gameover = True
-            if event.type == APPLY_GRAVITY_EVENT:
-                num_rows_deleted = board.accelerate()
-                if num_rows_deleted > 0:
-                    board.update_metrics(screen, num_rows_deleted, config)
-            if event.type == pygame.KEYDOWN:
-                # Quit game
-                if event.key in [pygame.K_ESCAPE]:
-                    board.gameover = True
-                if event.key in [pygame.K_UP, pygame.K_w]:
-                    board.rotate_CW()
-                if event.key in [pygame.K_LEFT, pygame.K_a]:
-                    board.translate(-1)
-                if event.key in [pygame.K_RIGHT, pygame.K_d]:
-                    board.translate(1)
-        pygame.display.update()
+            log.update_stats(avg_score=avg_score, min_score=min_score, max_score=max_score)
 
 if __name__ == "__main__":
-    run_game(config)
+    run_game()

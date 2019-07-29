@@ -1,8 +1,17 @@
-import pygame
+# Reference: https://github.com/nuno-faria/tetris-ai/blob/master/tetris.py
+import numpy as np
+from PIL import Image
+import cv2
+import matplotlib.pyplot as plt
+import pickle
+from matplotlib import style
+import time
 import random
-import piece
+import pdb
 
-class TetrisGame:
+style.use("ggplot")
+
+class Tetris:
     grid_colors = {'white': (255, 255, 255), \
               'grey': (128, 128, 128), \
               'black': (0, 0, 0)
@@ -41,148 +50,222 @@ class TetrisGame:
          [7, 7, 7]]
     ]
 
-    def __init__(self, height=16, width=10, block_size=35, gridline=1, gameover=False, score=0, lines_cleared=0, level=0):
-        """
-        Initialize a tetris board
-        :param height: how many blocks tall the tetris board should be
-        :param width: how many blocks wide the tetris board should be
-        :param block_size: how many pixels each block is comprised of
-        :param gridline: width of gridlines in pixels
-        :param gameover: gameover status
-        :param score: current score
-        :param lines_cleared: current number of lines cleared
-        :param level: current level
+    GRID_HEIGHT = 20
+    GRID_WIDTH = 10
 
-        :type height: int
-        :type width: int
-        :type block_size: int
-        :type gridline: int
-        :type gameover: boolean
-        """
-        # Initialize board of zeros
-        self.height = height
-        self.width = width
-        self.block_size = block_size
-        self.gridline = gridline
-        self.gameover = gameover
-        self.score = score
-        self.lines_cleared = lines_cleared
-        self.level = level
-        self.piece = piece.Piece(x=3, y=0, block_size=self.block_size, gridline=self.gridline)
-        self.board = []
-        for y in range(height):
-            row = [0] * width
-            self.board.append(row)
+    score = level = lines_cleared = 0
 
-    def __str__(self):
+    def __init__(self):
         """
-        The current state of the tetris board as a string
+        Initialize a Tetris game
         """
-        out = ""
-        for i in range(len(self.board)):
-            for j in range(len(self.board[i])):
-                out += str(self.board[i][j]) + "  "
-            out += "\n"
-        return out
+        self.reset_game()
 
-    def new_piece(self):
-        """
-        Generate a random new piece
-        """
-        ind = random.randrange(7)
-        new = piece.Piece(ind, x=3, y=0, block_size=self.block_size, gridline=self.gridline)
-        new.x = int(self.width/2 - new.shape[1]/2)
-        if self.check_collision(new):
-            self.gameover = True
-        self.piece = new
 
-    def translate(self, dx):
+    def reset_game(self):
         """
-        Translates tetris piece by dx grid squares
-        :param dx: 1 or -1 to move piece right or left, respectively.
-        :type dx: int
+        Reset a game
         """
-        new_x = self.piece.x + dx
-        if new_x < 0:
-            new_x = 0
-        if new_x > self.width - self.piece.shape[1]:
-            # self.piece.x = self.width - self.piece.shape[1]
-            new_x = self.width - self.piece.shape[1]
-        potential_new = self.piece.copy()
-        potential_new.shape = self.piece.shape
-        potential_new.x = new_x
-        if not self.check_collision(potential_new):
-            self.piece.x = new_x
+        self.board = [[0] * self.GRID_WIDTH for _ in range(self.GRID_HEIGHT)]
+        self.score = self.level = self.lines = 0
+        self.ind = random.randrange(len(self.pieces))
+        self.piece = self.pieces[self.ind]
+        self.current_pos = {'x': self.GRID_WIDTH//2 - len(self.piece[0])//2,
+                            'y': 0
+                            }
+        self.gameover = False
+        return self.get_state_props(self.board)
 
-    def accelerate(self):
+    def rotate_CW(self, piece, pos):
         """
-        Accelerates tetris piece down by one grid square.
-
-        :return num_rows_deleted: number of rows that were deleted after this
-                                  acceleration call.
+        Rotate the currently active piece clockwise
         """
-        num_rows_deleted = 0
-        self.piece.y += 1
-        if self.piece.y > self.height - self.piece.shape[0]:
-            self.piece.y = self.height - self.piece.shape[0]
-            self.store()
-            num_rows_deleted = self.check_row_cleared()
-
-        if self.check_collision(self.piece):
-            self.join_pieces()
-            num_rows_deleted = self.check_row_cleared()
-
-        return num_rows_deleted
-
-    def rotate_CW(self):
-        """
-        Rotate a tetris piece clockwise.
-        """
-        # # Had problems with x and y coordinates
-        num_rows_orig = num_cols_new = self.piece.shape[0]
-        num_cols_orig = num_rows_new = self.piece.shape[1]
+        num_rows_orig = num_cols_new = len(piece)
+        num_cols_orig = num_rows_new = len(piece[0])
         rotated_array = []
 
-        if self.piece.x + self.piece.shape[0] > self.width:
-            x_offset = self.piece.x + self.piece.shape[0] - self.width
-            self.piece.x -= x_offset
-        if self.piece.y + self.piece.shape[1] > self.height:
-            y_offset = self.piece.y + self.piece.shape[1] - self.height
-            self.piece.y -= y_offset
+        if pos['x'] + len(piece) > self.GRID_WIDTH:
+            x_offset = pos['x'] + len(piece) - self.GRID_WIDTH
+            pos['x'] -= x_offset
+        if pos['y'] + len(piece[0]) > self.GRID_HEIGHT:
+            y_offset = pos['y'] + len(piece[0]) - self.GRID_WIDTH
+            pos['y'] -= y_offset
 
         for i in range(num_rows_new):
             new_row = [0] * num_cols_new
             for j in range(num_cols_new):
-                new_row[j] = self.piece.piece[(num_rows_orig-1)-j][i]
+                new_row[j] = piece[(num_rows_orig-1)-j][i]
             rotated_array.append(new_row)
-        rotated_piece = self.piece.copy()
-        rotated_piece.piece = rotated_array
-        if not self.check_collision(rotated_piece):
-            self.piece.shape = (num_rows_new, num_cols_new)
-            self.piece.piece = rotated_piece.piece
+        if not self.check_collision(rotated_array, self.current_pos):
+            piece = rotated_array
+        return piece, pos
 
+    def get_state_props(self, board):
+        """
+        Get properties of the current state of the board
+        """
+        lines_cleared = self.check_cleared_rows()
+        holes = self.count_holes(board)
+        total_bumpiness, max_bumpiness = self.bumpiness(board)
+        sum_height, max_height, min_height = self.compute_height(board)
+        return [lines_cleared, holes, total_bumpiness, sum_height]
 
-    def check_collision(self, piece):
+    def count_holes(self, board):
         """
-        :param piece: piece to check collisions for
-        :type piece: Piece
-        :return True if the piece is hitting a wall or another piece,
-                else False
+        We count the number of times there's a non-zero entry above a 0
         """
-        for y in range(piece.shape[0]):
-            for x in range(piece.shape[1]):
-                try:
-                    if self.board[piece.y + y][piece.x + x] and piece.piece[y][x]:
-                        return True # We hit another tetrimino
-                except IndexError:
-                    return True # We hit out of bounds/a wall
+        board = np.array(board)
+        currs = board[:-1] # All rows except the last one
+        belows = board[1:] # All rows except the first one
+
+        # Take the difference of each row and its corresponding row below it
+        diffs = currs - belows
+
+        # If there was a 0 below a given element in currs, then diff should
+        # have the same value as currs at that element
+        num_holes = np.sum(diffs == currs)
+        return num_holes
+
+    def bumpiness(self, board):
+        """
+        We total the differences in heights between each column of the board.
+        The height of a column is the nonzero value at the highest point in the
+        column.
+        """
+        board = np.array(board)
+        mask = board != 0
+
+        # Get the inverted heights
+        inv_heights = np.where(mask.any(axis=0), \
+                               np.argmax(mask, axis=0), \
+                               self.GRID_HEIGHT)
+        # Get the correct heights
+        heights = self.GRID_HEIGHT - inv_heights
+
+        # Compute the differences in pairs of adjacent columns
+        currs = heights[:-1]
+        nexts = heights[1:]
+        diffs = np.abs(currs - nexts)
+
+        total_bumpiness = np.sum(diffs)
+        max_bumpiness = np.max(diffs)
+        return total_bumpiness, max_bumpiness
+
+    def compute_height(self, board):
+        """
+        We get the heights of each column
+        """
+
+        board = np.array(board)
+        mask = board != 0
+
+        # Get the inverted heights
+        inv_heights = np.where(mask.any(axis=0), \
+                               np.argmax(mask, axis=0), \
+                               self.GRID_HEIGHT)
+        # Get the correct heights
+        heights = self.GRID_HEIGHT - inv_heights
+
+        sum_height = np.sum(heights)
+        max_height = np.max(heights)
+        min_height = np.min(heights)
+
+        return sum_height, max_height, min_height
+
+    def get_state_size(self):
+        """
+        Returns number of dimensions in a given state
+        """
+        return 4
+
+    def get_next_states(self):
+        """
+        Get all possible next states for this piece
+        """
+        states = {}
+        piece_id = self.ind
+        curr_piece = self.piece
+        curr_pos = self.current_pos
+        if piece_id == 0: # O piece
+            num_rotations = 1
+        elif piece_id == 5: # I piece
+            num_rotations = 2
+        else:
+            num_rotations = 4
+
+        for i in range(num_rotations):
+            curr_piece, curr_pos = self.rotate_CW(curr_piece, curr_pos)
+            # Loop over all possible x values the upper left corner of the
+            # piece can take
+            for x in range(self.GRID_WIDTH - len(curr_piece[0])):
+                pos = {'x': x, \
+                       'y': 0}
+
+                # Drop the piece
+                while not self.check_collision(curr_piece, pos):
+                    pos['y'] += 1
+                pos['y'] -= 1
+
+                if pos['y'] >= 0:
+                    board = self.store(curr_piece, pos)
+                    states[(x, i)] = self.get_state_props(board)
+
+        return states
+
+    def get_current_board_state(self):
+        """
+        Return the current state of the board array including the currently
+        active piece.
+        """
+        board = [x[:] for x in self.board]
+        for y in range(len(self.piece)):
+            for x in range(len(self.piece[y])):
+                board[y+self.current_pos['y']][x+self.current_pos['x']] = self.piece[y][x]
+        return board
+
+    def get_game_score(self):
+        return self.score
+
+    def new_piece(self):
+        self.ind = random.randrange(len(self.pieces))
+        self.piece = self.pieces[self.ind]
+        self.current_pos = {'x': self.GRID_WIDTH//2 - len(self.piece[0])//2,
+                            'y': 0
+                            }
+        if self.check_collision(self.piece, self.current_pos):
+            self.gameover = True
+
+    def check_collision(self, piece, pos):
+        for y in range(len(piece)):
+            for x in range(len(piece[y])):
+                x += pos['x']
+                y += pos['y']
+                if x < 0 or x >= self.GRID_WIDTH or \
+                   y < 0 or y >= self.GRID_HEIGHT or \
+                   self.board[y][x] > 0:
+                    return True
         return False
 
-    def check_row_cleared(self):
+    def store(self, piece, pos):
+        """
+        Embed the currently active piece into the gameboard and then generate
+        a new active piece.
+        """
+        board = [x[:] for x in self.board]
+        for y in range(len(piece)):
+            for x in range(len(piece[y])):
+                try:
+                    board[y+pos['y']][x+pos['x']] = piece[y][x]
+                except IndexError:
+                    print(y + pos['y'], x+pos['x'])
+        return board
+
+    def check_cleared_rows(self):
         """
         Check for any completed rows.
         :return number of rows deleted
         """
+
         to_delete = []
         for i, row in enumerate(self.board[::-1]):
             if 0 not in row:
@@ -199,81 +282,40 @@ class TetrisGame:
         """
         for i in indices[::-1]:
             del self.board[i]
-            self.board = [[0 for _ in range(self.width)]] + self.board
+            self.board = [[0 for _ in range(self.GRID_WIDTH)]] + self.board
 
-    def store(self):
-        """
-        Embed the currently active piece into the gameboard and then generate
-        a new active piece.
-        """
-        for y in range(self.piece.shape[0]):
-            for x in range(self.piece.shape[1]):
-                if self.piece.piece[y][x] != 0:
-                    self.board[self.piece.y + y][self.piece.x + x] = self.piece.piece[y][x]
+    def play_game(self, x, num_rotations, show=False):
+        for _ in range(num_rotations):
+            self.piece, self.current_pos = self.rotate_CW(self.piece, self.current_pos)
+        self.current_pos = {'x': x, \
+                            'y': 0}
+        while not self.check_collision(self.piece, self.current_pos):
+            if show:
+                self.show()
+            self.current_pos['y'] += 1
+
+        # We break out of the while loop if a collision occurs
+        # Consequently, we undo our advancement in the y direction
+        self.current_pos['y'] -= 1
+
+        # Update the board
+        self.board = self.store(self.piece, self.current_pos)
+        lines_cleared = self.check_cleared_rows()
+        score = (1 + (lines_cleared ** 2)) * self.GRID_WIDTH
+        self.score += score
+
         self.new_piece()
+        if self.gameover:
+            score -= 2
 
-    def join_pieces(self):
-        """
-        Embed the currently active piece into the gameboard when near an
-        occupied space of the gameboard, then generate a new active piece.
-        """
-        for y in range(self.piece.shape[0]):
-            for x in range(self.piece.shape[1]):
-                self.board[self.piece.y + y - 1][self.piece.x + x] += self.piece.piece[y][x]
-        self.new_piece()
+        return score, self.gameover
 
-    def update_metrics(self, screen, num_rows_deleted, config):
-        """
-        Update the score, number of lines cleared, and level after lines have
-        been cleared.
-        :param screen: PyGame Surface object that we will be writing the
-                       metrics onto
-        :param num_rows_deleted: Number of lines just recently cleared
-        :param config: Configurations of the game
-
-        :type screen: PyGame Surface
-        :type num_rows_deleted: int
-        :type config: dict
-        """
-        self.score += (level // 2 + 1) * points_per_line[num_rows_deleted-1]
-        self.lines_cleared += num_rows_deleted
-        self.level = self.lines_cleared // 12 # Bump level every 12 lines
-
-    def show_metrics(self, screen, config, text_size=24):
-        """
-        Display the current metrics on the game window
-        :param screen: PyGame Surface object that we will be writing the
-                       metrics onto
-        :param text_size: Size of the text on game window
-
-        :type screen: PyGame Surface
-        :type text_size: int
-        """
-        font = pygame.font.Font(pygame.font.get_default_font(), text_size)
-
-        # Render surfaces
-        score_surface = font.render("Score: " + str(self.score), True, self.grid_colors['white'])
-        lines_cleared_surface = font.render("Lines Cleared: "+str(self.lines_cleared), True, self.grid_colors['white'])
-        level_surface = font.render("Level: " + str(self.level), True, self.grid_colors['white'])
-
-        # Get rect objects
-        score_rect = score_surface.get_rect(centerx=(config['block_size'] + config['gridline']) * (config['width'] + 3), centery = (config['block_size'] + config['gridline']) * (1))
-        lines_cleared_rect = lines_cleared_surface.get_rect(centerx=(config['block_size'] + config['gridline']) * (config['width'] + 3), centery = (config['block_size'] + config['gridline']) * (2))
-        level_rect = level_surface.get_rect(centerx=(config['block_size'] + config['gridline']) * (config['width'] + 3), centery = (config['block_size'] + config['gridline']) * (3))
-
-        screen.blit(score_surface, score_rect)
-        screen.blit(lines_cleared_surface, lines_cleared_rect)
-        screen.blit(level_surface, level_rect)
-
-        pygame.display.update()
-
-    def draw(self, screen):
-        """
-        Displays the tetris board onto the actual screen.
-        :param screen: PyGame Surface object to draw the board onto
-        :type screen: Surface
-        """
-        for y in range(len(self.board)):
-            for x in range(len(self.board[y])):
-                rect = pygame.Rect((self.block_size + self.gridline) * x, (self.block_size + self.gridline) * y, self.block_size, self.block_size)
-                pygame.draw.rect(screen, self.piece_colors[self.board[y][x]], rect)
+    def show(self):
+        img = [self.piece_colors[p] for row in self.get_current_board_state() \
+                               for p in row]
+        img = np.array(img).reshape(self.GRID_WIDTH, self.GRID_HEIGHT, 3).astype(np.uint8)
+        img = Image.fromarray(img, "RGB")
+        img = img.resize((self.GRID_WIDTH * 35, self.GRID_HEIGHT * 35))
+        img = np.array(img)
+        cv2.putText(img, str(self.score), (50, 50), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.4, color=(0,0,0))
+        cv2.imshow("Tetris", np.array(img))
