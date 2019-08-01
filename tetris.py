@@ -256,6 +256,16 @@ class Tetris:
                     board[y+pos['y']][x+pos['x']] = piece[y][x]
         return board
 
+    def join_pieces(self, piece, pos):
+        """
+        Embed the currently active piece into the gameboard when near an
+        occupied space of the gameboard, then generate a new active piece.
+        """
+        board = [x[:] for x in self.board]
+        for y in range(len(piece)):
+            for x in range(len(piece[y])):
+                board[pos['y'] + y - 1][pos['x'] + x] += piece[y][x]
+
     def check_cleared_rows(self):
         """
         Check for any completed rows.
@@ -293,8 +303,11 @@ class Tetris:
                 self.show()
             self.current_pos['y'] += 1
 
-        # Update the board
-        self.board = self.store(self.piece, self.current_pos)
+        if self.check_collision(self.piece, self.current_pos):
+            self.board = self.join_pieces(self.piece, self.current_pos)
+        else:
+            self.board = self.store(self.piece, self.current_pos)
+            
         lines_cleared = self.check_cleared_rows()
         score = (1 + (lines_cleared ** 2)) * self.GRID_WIDTH
         self.score += score
