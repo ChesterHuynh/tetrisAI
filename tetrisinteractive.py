@@ -3,6 +3,8 @@ import random
 import piece
 
 class TetrisGame:
+    points_per_line = [100, 400, 900, 2000]
+
     grid_colors = {'white': (255, 255, 255), \
               'grey': (128, 128, 128), \
               'black': (0, 0, 0)
@@ -235,7 +237,7 @@ class TetrisGame:
         :type num_rows_deleted: int
         :type config: dict
         """
-        self.score += (level // 2 + 1) * points_per_line[num_rows_deleted-1]
+        self.score += (self.level // 2 + 1) * self.points_per_line[num_rows_deleted-1]
         self.lines_cleared += num_rows_deleted
         self.level = self.lines_cleared // 12 # Bump level every 12 lines
 

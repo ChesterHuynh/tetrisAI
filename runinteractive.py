@@ -5,7 +5,6 @@ from time import time
 
 import tetrisinteractive
 
-points_per_line = [100, 400, 900, 2000]
 colors = {'white': (255, 255, 255), \
           'grey': (128, 128, 128), \
           'black': (0, 0, 0)
@@ -47,13 +46,12 @@ def run_game(config):
     pygame.time.set_timer(APPLY_GRAVITY_EVENT, config['gravity_buffer'])
 
     # Initialize pertinant game variables
-    board = tetris.TetrisGame(height=config['height'], width=config['width'], \
+    board = tetrisinteractive.TetrisGame(height=config['height'], width=config['width'], \
                               block_size=config['block_size'], gridline=config['gridline'], gameover=False)
-    level = score = lines_cleared = 0
 
     board.show_metrics(screen, config)
     while not board.gameover:
-        config['gravity_buffer'] /= (1 + level//10)
+        config['gravity_buffer'] /= (1 + board.level//10)
         screen.fill(colors['black'])
 
         # Show HEIGHT x WIDTH grid and the active block

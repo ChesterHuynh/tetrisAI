@@ -85,19 +85,17 @@ class Tetris:
         rotated_array = []
 
         if pos['x'] + len(piece) > self.GRID_WIDTH:
-            x_offset = pos['x'] + len(piece) - self.GRID_WIDTH
-            pos['x'] -= x_offset
+            pos['x'] = self.GRID_WIDTH - len(piece)
         if pos['y'] + len(piece[0]) > self.GRID_HEIGHT:
-            y_offset = pos['y'] + len(piece[0]) - self.GRID_HEIGHT
-            pos['y'] -= y_offset
+            pos['y'] = self.GRID_HEIGHT - len(piece[0])
 
         for i in range(num_rows_new):
             new_row = [0] * num_cols_new
             for j in range(num_cols_new):
                 new_row[j] = piece[(num_rows_orig-1)-j][i]
             rotated_array.append(new_row)
-        if not self.check_collision(rotated_array, self.current_pos):
-            piece = rotated_array
+        # if not self.check_collision(rotated_array, self.current_pos):
+        piece = rotated_array
         return piece, pos
 
     def get_state_props(self, board):
@@ -197,17 +195,25 @@ class Tetris:
             curr_piece, curr_pos = self.rotate_CW(curr_piece, curr_pos)
             # Loop over all possible x values the upper left corner of the
             # piece can take
-            for x in range(self.GRID_WIDTH - len(curr_piece[0])):
+            for x in range(self.GRID_WIDTH - len(curr_piece[0]) + 1):
                 # print(piece_id, i, range(self.GRID_WIDTH - len(curr_piece[0])))
                 pos = {'x': x, \
                        'y': 0}
-
+                if x + len(curr_piece[0]) > 10:
+                    pdb.set_trace()
+                if x > 6 and piece_id == 4 and len(curr_piece[0]) == 4:
+                    pdb.set_trace()
                 # Drop the piece
                 while not self.check_collision(curr_piece, pos) and pos['y'] < self.GRID_HEIGHT - len(curr_piece):
                     pos['y'] += 1
 
                 board = self.store(curr_piece, pos)
                 states[(x, i+1)] = self.get_state_props(board)
+
+                if self.check_collision(curr_piece, pos):
+                    board = self.join_pieces(curr_piece, pos)
+                else:
+                    board = self.store(curr_piece, pos)
 
         return states
 
@@ -264,7 +270,12 @@ class Tetris:
         board = [x[:] for x in self.board]
         for y in range(len(piece)):
             for x in range(len(piece[y])):
-                board[pos['y'] + y - 1][pos['x'] + x] += piece[y][x]
+                try:
+                    if piece[y][x]:
+                        board[pos['y'] + y - 1][pos['x'] + x] = piece[y][x]
+                except IndexError:
+                    pdb.set_trace()
+        return board
 
     def check_cleared_rows(self):
         """
@@ -291,13 +302,13 @@ class Tetris:
             self.board = [[0 for _ in range(self.GRID_WIDTH)]] + self.board
 
     def play_game(self, x, num_rotations, show=True):
-        # if self.ind == 4 and x > 6:
-        #     pdb.set_trace()
         self.current_pos = {'x': x, \
                             'y': 0
                             }
         for _ in range(num_rotations):
             self.piece, self.current_pos = self.rotate_CW(self.piece, self.current_pos)
+        if x + len(self.piece[0]) > 10:
+            pdb.set_trace()
         while not self.check_collision(self.piece, self.current_pos) and self.current_pos['y'] < self.GRID_HEIGHT - len(self.piece):
             if show:
                 self.show()
@@ -307,7 +318,7 @@ class Tetris:
             self.board = self.join_pieces(self.piece, self.current_pos)
         else:
             self.board = self.store(self.piece, self.current_pos)
-            
+
         lines_cleared = self.check_cleared_rows()
         score = (1 + (lines_cleared ** 2)) * self.GRID_WIDTH
         self.score += score
@@ -320,7 +331,7 @@ class Tetris:
 
     def show(self):
         img = [self.piece_colors[p] for row in self.get_current_board_state() for p in row]
-        img = np.array(img).reshape((self.GRID_WIDTH, self.GRID_HEIGHT, 3)).astype(np.uint8)
+        img = np.array(img).reshape((self.GRID_HEIGHT, self.GRID_WIDTH, 3)).astype(np.uint8)
         img = img[...,::-1] # Reverse each 3-tuple in place
         img = Image.fromarray(img, "RGB")
         img = img.resize((self.GRID_WIDTH * 35, self.GRID_HEIGHT * 35))
