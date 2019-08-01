@@ -88,7 +88,7 @@ class Tetris:
             x_offset = pos['x'] + len(piece) - self.GRID_WIDTH
             pos['x'] -= x_offset
         if pos['y'] + len(piece[0]) > self.GRID_HEIGHT:
-            y_offset = pos['y'] + len(piece[0]) - self.GRID_WIDTH
+            y_offset = pos['y'] + len(piece[0]) - self.GRID_HEIGHT
             pos['y'] -= y_offset
 
         for i in range(num_rows_new):
@@ -184,11 +184,11 @@ class Tetris:
         """
         states = {}
         piece_id = self.ind
-        curr_piece = self.piece
-        curr_pos = self.current_pos
+        curr_piece = [row[:] for row in self.piece]
+        curr_pos = {'x': self.current_pos['x'], 'y': self.current_pos['y']}
         if piece_id == 0: # O piece
             num_rotations = 1
-        elif piece_id == 5: # I piece
+        elif piece_id == 4: # I piece
             num_rotations = 2
         else:
             num_rotations = 4
@@ -198,17 +198,16 @@ class Tetris:
             # Loop over all possible x values the upper left corner of the
             # piece can take
             for x in range(self.GRID_WIDTH - len(curr_piece[0])):
+                # print(piece_id, i, range(self.GRID_WIDTH - len(curr_piece[0])))
                 pos = {'x': x, \
                        'y': 0}
 
                 # Drop the piece
-                while not self.check_collision(curr_piece, pos):
+                while not self.check_collision(curr_piece, pos) and pos['y'] < self.GRID_HEIGHT - len(curr_piece):
                     pos['y'] += 1
-                pos['y'] -= 1
 
-                if pos['y'] >= 0:
-                    board = self.store(curr_piece, pos)
-                    states[(x, i)] = self.get_state_props(board)
+                board = self.store(curr_piece, pos)
+                states[(x, i+1)] = self.get_state_props(board)
 
         return states
 
@@ -238,11 +237,10 @@ class Tetris:
     def check_collision(self, piece, pos):
         for y in range(len(piece)):
             for x in range(len(piece[y])):
-                x += pos['x']
-                y += pos['y']
-                if x < 0 or x >= self.GRID_WIDTH or \
-                   y < 0 or y >= self.GRID_HEIGHT or \
-                   self.board[y][x] > 0:
+                try:
+                    if self.board[pos['y'] + y][pos['x'] + x] and piece[y][x]:
+                        return True
+                except IndexError:
                     return True
         return False
 
@@ -254,10 +252,8 @@ class Tetris:
         board = [x[:] for x in self.board]
         for y in range(len(piece)):
             for x in range(len(piece[y])):
-                try:
+                if piece[y][x] != 0:
                     board[y+pos['y']][x+pos['x']] = piece[y][x]
-                except IndexError:
-                    print(y + pos['y'], x+pos['x'])
         return board
 
     def check_cleared_rows(self):
@@ -284,19 +280,18 @@ class Tetris:
             del self.board[i]
             self.board = [[0 for _ in range(self.GRID_WIDTH)]] + self.board
 
-    def play_game(self, x, num_rotations, show=False):
+    def play_game(self, x, num_rotations, show=True):
+        # if self.ind == 4 and x > 6:
+        #     pdb.set_trace()
+        self.current_pos = {'x': x, \
+                            'y': 0
+                            }
         for _ in range(num_rotations):
             self.piece, self.current_pos = self.rotate_CW(self.piece, self.current_pos)
-        self.current_pos = {'x': x, \
-                            'y': 0}
-        while not self.check_collision(self.piece, self.current_pos):
+        while not self.check_collision(self.piece, self.current_pos) and self.current_pos['y'] < self.GRID_HEIGHT - len(self.piece):
             if show:
                 self.show()
             self.current_pos['y'] += 1
-
-        # We break out of the while loop if a collision occurs
-        # Consequently, we undo our advancement in the y direction
-        self.current_pos['y'] -= 1
 
         # Update the board
         self.board = self.store(self.piece, self.current_pos)
@@ -311,11 +306,12 @@ class Tetris:
         return score, self.gameover
 
     def show(self):
-        img = [self.piece_colors[p] for row in self.get_current_board_state() \
-                               for p in row]
-        img = np.array(img).reshape(self.GRID_WIDTH, self.GRID_HEIGHT, 3).astype(np.uint8)
+        img = [self.piece_colors[p] for row in self.get_current_board_state() for p in row]
+        img = np.array(img).reshape((self.GRID_WIDTH, self.GRID_HEIGHT, 3)).astype(np.uint8)
+        img = img[...,::-1] # Reverse each 3-tuple in place
         img = Image.fromarray(img, "RGB")
         img = img.resize((self.GRID_WIDTH * 35, self.GRID_HEIGHT * 35))
         img = np.array(img)
         cv2.putText(img, str(self.score), (50, 50), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.4, color=(0,0,0))
         cv2.imshow("Tetris", np.array(img))
+        cv2.waitKey(1)
