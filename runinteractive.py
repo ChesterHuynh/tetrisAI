@@ -12,7 +12,7 @@ colors = {'white': (255, 255, 255), \
 
 config = {'height': 20, # height: number of squares in a column of the grid
           'width': 10, # width: number of squares in a row of the grid
-          'gridline': 1, # gridline: width of gridlines in number of pixels
+          'gridline': 0, # gridline: width of gridlines in number of pixels
           'block_size': 35, # block_size: number of pixels for each square in game grid
           'speed': [2, 2], # speed: speed of gameplay
           'move_buffer': 0.05, # move_buffer: seconds between accepting user input

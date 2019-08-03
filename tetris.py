@@ -18,14 +18,14 @@ class Tetris:
               }
 
     piece_colors = [
-        (128, 128, 128),
-        (255, 0,   0  ),
-        (0,   150, 0  ),
-        (0,   0,   255),
-        (255, 120, 0  ),
-        (255, 255, 0  ),
-        (180, 0,   255),
-        (0,   220, 220)
+        (255, 255, 255), # White
+        (255, 0,   0  ), # Red
+        (54,  175, 144), # Green
+        (0,   0,   255), # Blue
+        (254, 151, 32 ), # Orange
+        (255, 255, 0  ), # Yellow
+        (147, 88,  254), # Purple
+        (102, 217, 238) # Cyan
     ]
 
     pieces = [
@@ -196,25 +196,13 @@ class Tetris:
             # Loop over all possible x values the upper left corner of the
             # piece can take
             for x in range(self.GRID_WIDTH - len(curr_piece[0]) + 1):
-                # print(piece_id, i, range(self.GRID_WIDTH - len(curr_piece[0])))
                 pos = {'x': x, \
                        'y': 0}
-                if x + len(curr_piece[0]) > 10:
-                    pdb.set_trace()
-                if x > 6 and piece_id == 4 and len(curr_piece[0]) == 4:
-                    pdb.set_trace()
                 # Drop the piece
-                while not self.check_collision(curr_piece, pos) and pos['y'] < self.GRID_HEIGHT - len(curr_piece):
+                while not self.check_collision(curr_piece, pos):
                     pos['y'] += 1
-
                 board = self.store(curr_piece, pos)
                 states[(x, i+1)] = self.get_state_props(board)
-
-                if self.check_collision(curr_piece, pos):
-                    board = self.join_pieces(curr_piece, pos)
-                else:
-                    board = self.store(curr_piece, pos)
-
         return states
 
     def get_current_board_state(self):
@@ -241,14 +229,32 @@ class Tetris:
             self.gameover = True
 
     def check_collision(self, piece, pos):
+        last_collision_row = -1
+        future_y = pos['y'] + 1
+        result = False
         for y in range(len(piece)):
             for x in range(len(piece[y])):
-                try:
-                    if self.board[pos['y'] + y][pos['x'] + x] and piece[y][x]:
-                        return True
-                except IndexError:
-                    return True
-        return False
+                if future_y + y > self.GRID_HEIGHT-1:
+                    result = True
+                elif self.board[future_y + y][pos['x'] + x] and piece[y][x]:
+                    if y > last_collision_row:
+                        last_collision_row = y - 1
+                    result = True
+
+        # If there is overflow at the top of the board, then truncate piece and result in gameover
+        if pos['y'] - last_collision_row < 0:
+            while last_collision_row >= 0:
+                if len(piece) > 1:
+                    piece = piece[1:] # Chop off the top
+                else:
+                    self.gameover = True
+                    return result
+                last_collision_row = -1
+                for y in range(len(piece)):
+                    for x in range(len(piece[y])):
+                        if self.board[pos['y'] + y][pos['x'] + x] and piece[y][x] and y > last_collision_row:
+                            last_collision_row = y
+        return result
 
     def store(self, piece, pos):
         """
@@ -258,23 +264,8 @@ class Tetris:
         board = [x[:] for x in self.board]
         for y in range(len(piece)):
             for x in range(len(piece[y])):
-                if piece[y][x] != 0:
+                if piece[y][x] and not board[y+pos['y']][x+pos['x']]:
                     board[y+pos['y']][x+pos['x']] = piece[y][x]
-        return board
-
-    def join_pieces(self, piece, pos):
-        """
-        Embed the currently active piece into the gameboard when near an
-        occupied space of the gameboard, then generate a new active piece.
-        """
-        board = [x[:] for x in self.board]
-        for y in range(len(piece)):
-            for x in range(len(piece[y])):
-                try:
-                    if piece[y][x]:
-                        board[pos['y'] + y - 1][pos['x'] + x] = piece[y][x]
-                except IndexError:
-                    pdb.set_trace()
         return board
 
     def check_cleared_rows(self):
@@ -282,7 +273,6 @@ class Tetris:
         Check for any completed rows.
         :return number of rows deleted
         """
-
         to_delete = []
         for i, row in enumerate(self.board[::-1]):
             if 0 not in row:
@@ -307,17 +297,14 @@ class Tetris:
                             }
         for _ in range(num_rotations):
             self.piece, self.current_pos = self.rotate_CW(self.piece, self.current_pos)
-        if x + len(self.piece[0]) > 10:
-            pdb.set_trace()
-        while not self.check_collision(self.piece, self.current_pos) and self.current_pos['y'] < self.GRID_HEIGHT - len(self.piece):
+        while not self.check_collision(self.piece, self.current_pos):
+            self.current_pos['y'] += 1
             if show:
                 self.show()
-            self.current_pos['y'] += 1
 
-        if self.check_collision(self.piece, self.current_pos):
-            self.board = self.join_pieces(self.piece, self.current_pos)
-        else:
-            self.board = self.store(self.piece, self.current_pos)
+        self.board = self.store(self.piece, self.current_pos)
+        if show:
+            self.show()
 
         lines_cleared = self.check_cleared_rows()
         score = (1 + (lines_cleared ** 2)) * self.GRID_WIDTH
@@ -326,7 +313,10 @@ class Tetris:
         self.new_piece()
         if self.gameover:
             score -= 2
-
+            if show:
+                print()
+                print(self.board)
+                print()
         return score, self.gameover
 
     def show(self):
