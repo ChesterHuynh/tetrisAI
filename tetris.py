@@ -69,7 +69,7 @@ class Tetris:
         self.board = [[0] * self.GRID_WIDTH for _ in range(self.GRID_HEIGHT)]
         self.score = self.level = self.lines = 0
         self.ind = random.randrange(len(self.pieces))
-        self.piece = self.pieces[self.ind]
+        self.piece = [row[:] for row in self.pieces[self.ind]]
         self.current_pos = {'x': self.GRID_WIDTH//2 - len(self.piece[0])//2,
                             'y': 0
                             }
@@ -94,7 +94,6 @@ class Tetris:
             for j in range(num_cols_new):
                 new_row[j] = piece[(num_rows_orig-1)-j][i]
             rotated_array.append(new_row)
-        # if not self.check_collision(rotated_array, self.current_pos):
         piece = rotated_array
         return piece, pos
 
@@ -151,7 +150,13 @@ class Tetris:
 
     def compute_height(self, board):
         """
-        We get the heights of each column
+        We compute the heights of each column.
+        :param board: Board array
+        :type board: List[List[int]]
+
+        :return sum_height: the sum of each column's height
+        :return max_height: the maximum height of all the columns
+        :return min_height: the minimum height of all the columns
         """
 
         board = np.array(board)
@@ -172,13 +177,13 @@ class Tetris:
 
     def get_state_size(self):
         """
-        Returns number of dimensions in a given state
+        Returns number of dimensions in a given state.
         """
         return 4
 
     def get_next_states(self):
         """
-        Get all possible next states for this piece
+        Get all possible next states for this piece.
         """
         states = {}
         piece_id = self.ind
@@ -209,6 +214,9 @@ class Tetris:
         """
         Return the current state of the board array including the currently
         active piece.
+
+        :return board: the board with its currently placed pieces and
+        the actively moving piece.
         """
         board = [x[:] for x in self.board]
         for y in range(len(self.piece)):
@@ -217,11 +225,17 @@ class Tetris:
         return board
 
     def get_game_score(self):
+        """
+        Return the score of the game.
+        """
         return self.score
 
     def new_piece(self):
+        """
+        Generate a new piece.
+        """
         self.ind = random.randrange(len(self.pieces))
-        self.piece = self.pieces[self.ind]
+        self.piece = [row[:] for row in self.pieces[self.ind]]
         self.current_pos = {'x': self.GRID_WIDTH//2 - len(self.piece[0])//2,
                             'y': 0
                             }
@@ -229,23 +243,35 @@ class Tetris:
             self.gameover = True
 
     def check_collision(self, piece, pos):
+        """
+        Check if a collision occurred between the currently active piece and either the walls of the board or any placed piece.
+        :param piece: a Piece array
+        :param pos: current position of the array in the board
+        :type piece: List[List[int]]
+        :type pos: dict[str] = int
+        """
         last_collision_row = -1
         future_y = pos['y'] + 1
         result = False
+
         for y in range(len(piece)):
             for x in range(len(piece[y])):
                 if future_y + y > self.GRID_HEIGHT-1:
                     result = True
                 elif self.board[future_y + y][pos['x'] + x] and piece[y][x]:
-                    if y > last_collision_row:
-                        last_collision_row = y - 1
                     result = True
 
+        for y in range(len(piece)):
+            for x in range(len(piece[y])):
+                if self.board[pos['y'] + y][pos['x'] + x] and piece[y][x]:
+                    if y > last_collision_row:
+                        last_collision_row = y
+
         # If there is overflow at the top of the board, then truncate piece and result in gameover
-        if pos['y'] - last_collision_row < 0:
+        if pos['y'] - (len(piece) - last_collision_row) < 0 and last_collision_row > -1:
             while last_collision_row >= 0:
                 if len(piece) > 1:
-                    piece = piece[1:] # Chop off the top
+                    del piece[0]
                 else:
                     self.gameover = True
                     return result
@@ -260,6 +286,10 @@ class Tetris:
         """
         Embed the currently active piece into the gameboard and then generate
         a new active piece.
+        :param piece: a Piece array
+        :param pos: current position of the array in the board
+        :type piece: List[List[int]]
+        :type pos: dict[str] = int
         """
         board = [x[:] for x in self.board]
         for y in range(len(piece)):
@@ -271,7 +301,7 @@ class Tetris:
     def check_cleared_rows(self):
         """
         Check for any completed rows.
-        :return number of rows deleted
+        :return len(to_delete): number of rows deleted
         """
         to_delete = []
         for i, row in enumerate(self.board[::-1]):
@@ -292,6 +322,15 @@ class Tetris:
             self.board = [[0 for _ in range(self.GRID_WIDTH)]] + self.board
 
     def play_game(self, x, num_rotations, show=True):
+        """
+        Given some starting x coordinate, place the piece in that column.
+        :param x: x coordinate of the upper left hand corner of piece to start dropping the piece.
+        :param num_rotations: the number of rotations to apply to the piece
+        :param show: whether to display the gameplay
+        :type x: int
+        :type num_rotations: int
+        :type show: Boolean
+        """
         self.current_pos = {'x': x, \
                             'y': 0
                             }
@@ -309,17 +348,18 @@ class Tetris:
         lines_cleared = self.check_cleared_rows()
         score = (1 + (lines_cleared ** 2)) * self.GRID_WIDTH
         self.score += score
-
-        self.new_piece()
         if self.gameover:
-            score -= 2
             if show:
-                print()
-                print(self.board)
-                print()
+                self.show()
+            score -= 2
+        else:
+            self.new_piece()
         return score, self.gameover
 
     def show(self):
+        """
+        Display the current state of the board.
+        """
         img = [self.piece_colors[p] for row in self.get_current_board_state() for p in row]
         img = np.array(img).reshape((self.GRID_HEIGHT, self.GRID_WIDTH, 3)).astype(np.uint8)
         img = img[...,::-1] # Reverse each 3-tuple in place

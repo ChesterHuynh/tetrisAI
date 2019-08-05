@@ -45,7 +45,7 @@ def run_game():
         else:
             show = False
 
-        while not done and (not max_steps or steps < amx_steps):
+        while not done and (not max_steps or steps < max_steps):
             next_states = env.get_next_states()
             best_state = agent.best_state(next_states.values())
 
@@ -55,7 +55,6 @@ def run_game():
                     best_action = action
                     break
             reward, done = env.play_game(best_action[0], best_action[1], show=show)
-
             agent.update_replay_memory(current_state, next_states[best_action], reward, done)
             current_state = next_states[best_action]
             steps += 1
