@@ -13,9 +13,9 @@ def run_game():
     max_steps = None
     replay_mem_size = 20000
     minibatch_size = 64
-    epsilon = 0.9
+    epsilon = 0.95
     epsilon_min = 1e-3
-    epsilon_decay = 0.9975
+    epsilon_decay = 0.99
     learning_rate = 1e-3
     epochs = 1
     show_every = 50
@@ -50,14 +50,24 @@ def run_game():
             best_state = agent.best_state(next_states.values())
 
             best_action = None
+            # action is (x,i), state is [lines_cleared, holes, total_bumpiness, sum_height]
             for action, state in next_states.items():
                 if state == best_state:
                     best_action = action
                     break
+            # reward is the score, done is gameover status
             reward, done = env.play_game(best_action[0], best_action[1], show=show)
+            if show:
+                env.show()
             agent.update_replay_memory(current_state, next_states[best_action], reward, done)
+
+            # move to next timestep
             current_state = next_states[best_action]
             steps += 1
+        if show:
+            print()
+            print(env.board)
+        # After game is completed
         scores.append(env.get_game_score())
 
         if episode % train_every == 0:

@@ -104,7 +104,9 @@ class DQNAgent:
 
     def best_state(self, states):
         """
-        Given a collection of states, return the state with the best q-value
+        Given a list of states, return the state with the best q-value
+        :param states: list of states to look through
+        :type states: List[List[int, int, int, int]]
         """
         max_value = None
         best_state = None
@@ -128,10 +130,11 @@ class DQNAgent:
             # training over the same data when sampling to create our
             # minibatches
             return
-        # Get our minibatch data
+        # Get minibatch of data
         minibatch = random.sample(self.memory, self.minibatch_size)
 
         # Obtain the predicted q values for each state given future states
+        # transition is a tuple of (state, next_state, reward, done)
         new_states = np.array([transition[1] for transition in minibatch])
         future_qs_list = self.model.predict(new_states)
 

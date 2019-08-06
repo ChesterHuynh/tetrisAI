@@ -184,6 +184,7 @@ class Tetris:
     def get_next_states(self):
         """
         Get all possible next states for this piece.
+        :return states: dictionary of actions and corresponding state properties
         """
         states = {}
         piece_id = self.ind
