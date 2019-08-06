@@ -10,7 +10,6 @@ The score for the interactive game is calculated as:
 and the game speed is adjusted as the level increases.
 
 
-<br/>
 ### AI Version
 For the AI, a Deep Q-Learning Network (DQN) is implemented, aiming for a goal score of 5,000 points. The AI doesn't have levels, so the score is calculated as:
   `score += (level // 2 + 1) * (1 + rows_cleared ** 2)`
@@ -18,7 +17,6 @@ For the AI, a Deep Q-Learning Network (DQN) is implemented, aiming for a goal sc
 See how you stack up against the AI! You can run the AI version by running `$ python main.py` in command line to begin training the agent.
 
 
-<br/>
 ### Helpful Links:
 -<a href="https://www.youtube.com/watch?v=yMk_XtIEzH8">Sentdex's Reinforcement YouTube Series</a>
 -<a href="https://towardsdatascience.com/simple-reinforcement-learning-q-learning-fcddc4b6fe56">Article on the q-learning algorithm</a>
