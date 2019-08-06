@@ -237,7 +237,7 @@ class TetrisGame:
         :type num_rows_deleted: int
         :type config: dict
         """
-        self.score += (self.level // 2 + 1) * self.points_per_line[num_rows_deleted-1]
+        self.score += (self.level // 2 + 1) * (1 + num_rows_deleted ** 2)
         self.lines_cleared += num_rows_deleted
         self.level = self.lines_cleared // 12 # Bump level every 12 lines
 
