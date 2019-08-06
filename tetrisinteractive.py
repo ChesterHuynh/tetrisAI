@@ -3,8 +3,6 @@ import random
 import piece
 
 class TetrisGame:
-    points_per_line = [100, 400, 900, 2000]
-
     grid_colors = {'white': (255, 255, 255), \
               'grey': (128, 128, 128), \
               'black': (0, 0, 0)
