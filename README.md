@@ -18,6 +18,6 @@ See how you stack up against the AI! You can run the AI version by running `$ py
 
 
 ### Helpful Links:
--<a href="https://www.youtube.com/watch?v=yMk_XtIEzH8">Sentdex's Reinforcement YouTube Series</a>
--<a href="https://towardsdatascience.com/simple-reinforcement-learning-q-learning-fcddc4b6fe56">Article on the q-learning algorithm</a>
--<a href="https://towardsdatascience.com/self-learning-ai-agents-part-ii-deep-q-learning-b5ac60c3f47">Article on the DQN framework</a>
+Sentdex's Reinforcement YouTube Series(https://www.youtube.com/watch?v=yMk_XtIEzH8)
+Article on the q-learning algorithm(https://towardsdatascience.com/simple-reinforcement-learning-q-learning-fcddc4b6fe56)
+Article on the DQN framework(https://towardsdatascience.com/self-learning-ai-agents-part-ii-deep-q-learning-b5ac60c3f47)
