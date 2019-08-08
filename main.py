@@ -3,19 +3,22 @@ from DQN import DQNAgent, ModifiedTensorBoard
 from datetime import datetime
 from statistics import mean, median
 from tqdm import tqdm
+import time
 import random
 
+MIN_SCORE = 3000
 
 def run_game():
     env = Tetris()
-    episodes = 5000
+    episodes = 2000
     max_steps = None
     discount = 0.95
     replay_mem_size = 20000
     minibatch_size = 128
     epsilon = 0.99
-    epsilon_min = 1e-3
     epsilon_decay = 0.9975
+    # epsilon_min = 0
+    epsilon_stop_episode = 500
     learning_rate = 1e-3
     epochs = 1
     show_every = 50
@@ -28,7 +31,8 @@ def run_game():
     agent = DQNAgent(env.get_state_size(), discount=discount, \
                    replay_mem_size=replay_mem_size, \
                    minibatch_size=minibatch_size, epsilon=epsilon, \
-                   epsilon_min=epsilon_min, epsilon_decay=epsilon_decay, \
+                   epsilon_decay=epsilon_decay, \
+                   # epsilon_stop_episode=epsilon_stop_episode, \
                    learning_rate=learning_rate, hidden_dims=hidden_dims, \
                    activations=activations, replay_start_size=replay_start_size)
 
@@ -66,13 +70,9 @@ def run_game():
 
             # move to next timestep
             current_state = next_states[best_action]
-            if show:
-                print(current_state)
             steps += 1
         if show:
-            print()
             env.show()
-            print(env.board)
         # After game is completed, collect the final score
         if show:
             print("Episode %d  score: %d  epsilon: %.2f" % (episode, env.get_game_score(), agent.epsilon))
@@ -87,6 +87,10 @@ def run_game():
             max_score = max(scores[-log_every:])
 
             log.update_stats(avg_score=avg_score, min_score=min_score, max_score=max_score)
+
+            if env.get_game_score() >= MIN_SCORE:
+                # Possible that min_reward is less than -200 because it might hit the enemy and never get the food
+                agent.model.save(f'models/nn_{str(hidden_dims)}__bs{minibatch_size}__score_{env.get_game_score()}__{int(time.time())}.model')
 
 if __name__ == "__main__":
     run_game()
