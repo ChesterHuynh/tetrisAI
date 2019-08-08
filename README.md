@@ -1,8 +1,10 @@
 # TetrisAI
-Standard Deep Q-Learning Network approach to teach an agent how to play Tetris.
+Standard Deep Q-learning Network approach to teach an agent how to play Tetris. The Q-learning algorithm is a reinforcement 
+learning algorithm that uses the general concept of providing the agent rewards when it achieves what we want it to achieve 
+and punishments otherwise.
 
 ### Interactive Version
-Implemented an interactive version of tetris using Pygame to better understand the game mechanics in `tetris.py`.
+I implemented an interactive version of tetris using Pygame to better understand the game mechanics in `tetris.py`.
 You can run `$ python runinteractive.py` in command line to begin an interactive game.
 
 The score for the interactive game is calculated as:
