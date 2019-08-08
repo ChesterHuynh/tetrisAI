@@ -4,31 +4,32 @@ from datetime import datetime
 from statistics import mean, median
 from tqdm import tqdm
 import random
-import pdb
 
 
 def run_game():
     env = Tetris()
     episodes = 5000
     max_steps = None
+    discount = 0.95
     replay_mem_size = 20000
-    minibatch_size = 64
-    epsilon = 0.95
+    minibatch_size = 128
+    epsilon = 0.99
     epsilon_min = 1e-3
-    epsilon_decay = 0.99
+    epsilon_decay = 0.9975
     learning_rate = 1e-3
     epochs = 1
     show_every = 50
     log_every = 50
     replay_start_size = 2000
     train_every = 1
-    hidden_dims = [64, 32]
+    hidden_dims = [32, 32]
     activations = ['relu', 'relu', 'linear']
 
-    agent = DQNAgent(env.get_state_size(), replay_mem_size=replay_mem_size, \
+    agent = DQNAgent(env.get_state_size(), discount=discount, \
+                   replay_mem_size=replay_mem_size, \
                    minibatch_size=minibatch_size, epsilon=epsilon, \
                    epsilon_min=epsilon_min, epsilon_decay=epsilon_decay, \
-                   learning_rate=learning_rate, hidden_dims=[64,32], \
+                   learning_rate=learning_rate, hidden_dims=hidden_dims, \
                    activations=activations, replay_start_size=replay_start_size)
 
     log_dir = f'log/tetris-{datetime.now().strftime("%Y%m%d-%H%M%S")}-nn={str(hidden_dims)}-mem={replay_mem_size}-bs={minibatch_size}-epochs={epochs}'
@@ -39,12 +40,14 @@ def run_game():
         current_state = env.reset_game()
         done = False
         steps = 0
+        log.step = episode
 
         if show_every and episode % show_every == 0:
             show = True
         else:
             show = False
 
+        # Run the game until either game over or we've hit max number of steps
         while not done and (not max_steps or steps < max_steps):
             next_states = env.get_next_states()
             best_state = agent.best_state(next_states.values())
@@ -63,11 +66,16 @@ def run_game():
 
             # move to next timestep
             current_state = next_states[best_action]
+            if show:
+                print(current_state)
             steps += 1
         if show:
             print()
+            env.show()
             print(env.board)
-        # After game is completed
+        # After game is completed, collect the final score
+        if show:
+            print("Episode %d  score: %d  epsilon: %.2f" % (episode, env.get_game_score(), agent.epsilon))
         scores.append(env.get_game_score())
 
         if episode % train_every == 0:

@@ -3,11 +3,9 @@ import numpy as np
 from PIL import Image
 import cv2
 import matplotlib.pyplot as plt
-import pickle
 from matplotlib import style
 import time
 import random
-import pdb
 
 style.use("ggplot")
 
@@ -100,6 +98,8 @@ class Tetris:
     def get_state_props(self, board):
         """
         Get properties of the current state of the board
+        :param board: 2D list representation of board
+        :type board: List[List[int]]
         """
         lines_cleared = self.check_cleared_rows()
         holes = self.count_holes(board)
@@ -109,18 +109,16 @@ class Tetris:
 
     def count_holes(self, board):
         """
-        We count the number of times there's a non-zero entry above a 0
+        We count the number of zeros below a non-zero entry.
+        :param board: 2D list representation of board
+        :type board: List[List[int]]
         """
-        board = np.array(board)
-        currs = board[:-1] # All rows except the last one
-        belows = board[1:] # All rows except the first one
-
-        # Take the difference of each row and its corresponding row below it
-        diffs = currs - belows
-
-        # If there was a 0 below a given element in currs, then diff should
-        # have the same value as currs at that element
-        num_holes = np.sum(diffs == currs)
+        num_holes = 0
+        for col in zip(*board):
+            row = 0
+            while row < self.GRID_HEIGHT and col[row] == 0:
+                row += 1
+            num_holes += len([x for x in col[row+1:] if x == 0])
         return num_holes
 
     def bumpiness(self, board):
@@ -343,15 +341,13 @@ class Tetris:
                 self.show()
 
         self.board = self.store(self.piece, self.current_pos)
-        if show:
-            self.show()
 
         lines_cleared = self.check_cleared_rows()
-        score = (1 + (lines_cleared ** 2)) * self.GRID_WIDTH
+        score = 1
+        if lines_cleared:
+            score += (1 + (lines_cleared ** 2)) * self.GRID_WIDTH
         self.score += score
         if self.gameover:
-            if show:
-                self.show()
             score -= 2
         else:
             self.new_piece()
@@ -361,7 +357,10 @@ class Tetris:
         """
         Display the current state of the board.
         """
-        img = [self.piece_colors[p] for row in self.get_current_board_state() for p in row]
+        if not self.gameover:
+            img = [self.piece_colors[p] for row in self.get_current_board_state() for p in row]
+        else:
+            img = [self.piece_colors[p] for row in self.board for p in row]
         img = np.array(img).reshape((self.GRID_HEIGHT, self.GRID_WIDTH, 3)).astype(np.uint8)
         img = img[...,::-1] # Reverse each 3-tuple in place
         img = Image.fromarray(img, "RGB")

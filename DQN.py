@@ -9,10 +9,7 @@ from keras.callbacks import TensorBoard
 from tensorflow.summary import FileWriter
 import random
 import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
 from collections import deque
-import pdb
 
 class ModifiedTensorBoard(TensorBoard):
 
@@ -99,6 +96,7 @@ class DQNAgent:
     def get_qs(self, state):
         """
         Make a prediction about the score for the given state.
+        We return with the 0th index because predict returns a 2d array
         """
         return self.model.predict(state)[0]
 
@@ -115,7 +113,7 @@ class DQNAgent:
             return random.choice(list(states))
         else:
             for state in states:
-                # To get model.predict to like the input
+                # Reshape so that model.predict likes the input
                 value = self.get_qs(np.reshape(state, [1, self.state_size]))
                 if not max_value or max_value < value:
                     max_value = value
@@ -124,27 +122,38 @@ class DQNAgent:
         return best_state
 
     def train(self, minibatch_size=64, epochs=3):
+        """
+        Train our neural network to estimate q-values.
+        :param minibatch_size: How many samples from our memory do we want to use for training.
+        :param epochs: number of epochs to train for.
+        :type minibatch_size: int
+        :type epochs: int
+        """
         # grab mini batch of replay memory
         if len(self.memory) < self.min_replay_memory_size:
             # Don't train on a super small replay memory, otherwise we risk
             # training over the same data when sampling to create our
             # minibatches
             return
+
         # Get minibatch of data
         minibatch = random.sample(self.memory, self.minibatch_size)
 
         # Obtain the predicted q values for each state given future states
-        # transition is a tuple of (state, next_state, reward, done)
+        # Note: transition is a tuple of (state, next_state, reward, done)
         new_states = np.array([transition[1] for transition in minibatch])
-        future_qs_list = self.model.predict(new_states)
+        future_qs_list = [x[0] for x in self.model.predict(new_states)]
 
         X = []
         y = []
 
         for index, (state, _, reward, done) in enumerate(minibatch):
+            # Update q values according to standard q-learning update rule
             if not done:
                 max_future_q = np.max(future_qs_list[index])
                 new_q = reward + self.discount * max_future_q
+            # Once we hit game over state, there is no future_qs_list
+            # So we just set new_q to reward
             else:
                 new_q = reward
 
@@ -153,5 +162,6 @@ class DQNAgent:
 
         self.model.fit(np.array(X), np.array(y), batch_size=self.minibatch_size, verbose=0, shuffle=False)
 
+        # Let exploration probability decay
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
