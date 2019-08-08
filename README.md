@@ -1,5 +1,5 @@
 # TetrisAI
-Simple Deep Q-Learning Network approach to teach an agent how to play Tetris
+Standard Deep Q-Learning Network approach to teach an agent how to play Tetris.
 
 ### Interactive Version
 Implemented an interactive version of tetris using Pygame to better understand the game mechanics in `tetris.py`.
