@@ -10,15 +10,16 @@ MIN_SCORE = 3000
 
 def run_game():
     env = Tetris()
-    episodes = 2000
+    episodes = 2500
     max_steps = None
     discount = 0.95
     replay_mem_size = 20000
-    minibatch_size = 128
-    epsilon = 0.99
-    epsilon_decay = 0.9975
-    # epsilon_min = 0
-    epsilon_stop_episode = 500
+    minibatch_size = 512
+    epsilon = 1
+    # epsilon_decay = 0.9975
+    # epsilon_min = 1e-3
+    epsilon_min = 0
+    epsilon_stop_episode = 1500
     learning_rate = 1e-3
     epochs = 1
     show_every = 50
@@ -31,8 +32,9 @@ def run_game():
     agent = DQNAgent(env.get_state_size(), discount=discount, \
                    replay_mem_size=replay_mem_size, \
                    minibatch_size=minibatch_size, epsilon=epsilon, \
-                   epsilon_decay=epsilon_decay, \
-                   # epsilon_stop_episode=epsilon_stop_episode, \
+                   # epsilon_decay=epsilon_decay, \
+                   epsilon_min=epsilon_min, \
+                   epsilon_stop_episode=epsilon_stop_episode, \
                    learning_rate=learning_rate, hidden_dims=hidden_dims, \
                    activations=activations, replay_start_size=replay_start_size)
 

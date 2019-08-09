@@ -46,8 +46,9 @@ class ModifiedTensorBoard(TensorBoard):
 class DQNAgent:
 
     def __init__(self, state_size, discount=0.95, replay_mem_size=10000, \
-                 minibatch_size=64, epsilon=1, epsilon_decay=0.9975, \
-                 epsilon_stop_episode=750, epsilon_min=1e-3, \
+                 minibatch_size=64, epsilon=1, \
+                 # epsilon_decay=0.9975, \
+                 epsilon_stop_episode=500, epsilon_min=1e-3, \
                  learning_rate=1e-3, loss='mse', \
                  optimizer=Adam, hidden_dims=[32,32], \
                  activations=['relu', 'relu', 'linear'], \
@@ -59,10 +60,10 @@ class DQNAgent:
         self.memory = deque(maxlen=replay_mem_size)
         self.minibatch_size = minibatch_size
         self.epsilon = epsilon
-        self.epsilon_decay = epsilon_decay
-        # self.epsilon_decay = (self.epsilon - self.epsilon_min) / epsilon_stop_episode
-        # self.epsilon_stop_episode = epsilon_stop_episode
         self.epsilon_min = epsilon_min
+        # self.epsilon_decay = epsilon_decay
+        self.epsilon_decay = (self.epsilon - self.epsilon_min) / epsilon_stop_episode
+        # self.epsilon_stop_episode = epsilon_stop_episode
         self.learning_rate = learning_rate
         self.loss = loss
         self.optimizer = optimizer
@@ -167,4 +168,5 @@ class DQNAgent:
 
         # Let exploration probability decay
         if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+            # self.epsilon *= self.epsilon_decay
+            self.epsilon -= self.epsilon_decay

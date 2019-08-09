@@ -345,7 +345,7 @@ class Tetris:
         lines_cleared = self.check_cleared_rows()
         score = 1
         if lines_cleared:
-            score += (1 + (lines_cleared ** 2)) * self.GRID_WIDTH
+            score += ((lines_cleared ** 2)) * self.GRID_WIDTH
         self.score += score
         if self.gameover:
             score -= 2
