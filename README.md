@@ -23,3 +23,5 @@ See how you stack up against the AI! You can run the AI version by running `$ py
 - [Sentdex's Reinforcement YouTube Series](https://www.youtube.com/watch?v=yMk_XtIEzH8)
 - [Article on the q-learning algorithm](https://towardsdatascience.com/simple-reinforcement-learning-q-learning-fcddc4b6fe56)
 - [Article on the DQN framework](https://towardsdatascience.com/self-learning-ai-agents-part-ii-deep-q-learning-b5ac60c3f47)
+- [More math on DQN's](https://towardsdatascience.com/dqn-part-1-vanilla-deep-q-networks-6eb4a00febfb)
+- [DeepMind's Deep RL Paper](https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf)
