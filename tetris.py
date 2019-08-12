@@ -105,6 +105,7 @@ class Tetris:
         holes = self.count_holes(board)
         total_bumpiness, max_bumpiness = self.bumpiness(board)
         sum_height, max_height, min_height = self.compute_height(board)
+
         return [lines_cleared, holes, total_bumpiness, sum_height]
 
     def count_holes(self, board):
@@ -136,7 +137,6 @@ class Tetris:
                                self.GRID_HEIGHT)
         # Get the correct heights
         heights = self.GRID_HEIGHT - inv_heights
-
         # Compute the differences in pairs of adjacent columns
         currs = heights[:-1]
         nexts = heights[1:]

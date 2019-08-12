@@ -52,7 +52,7 @@ class DQNAgent:
                  learning_rate=1e-3, loss='mse', \
                  optimizer=Adam, hidden_dims=[32,32], \
                  activations=['relu', 'relu', 'linear'], \
-                 replay_start_size=None, min_replay_memory_size=1000):
+                 replay_start_size=None):
         if len(activations) != len(hidden_dims) + 1:
             raise Exception('The number of activations should be the number of hidden layers + 1')
         self.state_size = state_size
@@ -72,21 +72,32 @@ class DQNAgent:
         if not replay_start_size:
             replay_start_size = replay_mem_size / 2
         self.replay_start_size = replay_start_size
-        self.min_replay_memory_size = min_replay_memory_size
 
         self.model = self.create_model()
+        self.UPDATE_TARGET_EVERY = 5
+        self.target_update_counter = 0
+
+        self.target_model = self.create_model()
+        self.target_model.set_weights(self.model.get_weights())
 
     def create_model(self):
         # Input --> ReLU --> ReLU --> Linear --> Output
-        layers = [Dense(self.hidden_dims[0], input_dim=self.state_size, activation=self.activations[0])]
-        for i in range(1, len(self.activations)-1):
-            layers.append(Dense(self.hidden_dims[i], activation=self.activations[i]))
-        layers.append(Dense(1, activation=self.activations[-1]))
+        # layers = [Dense(self.hidden_dims[0], input_dim=self.state_size, activation=self.activations[0])]
+        # for i in range(1, len(self.activations)-1):
+        #     layers.append(Dense(self.hidden_dims[i], activation=self.activations[i]))
+        # layers.append(Dense(1, activation=self.activations[-1]))
+        #
+        # model = Sequential(layers)
 
-        model = Sequential(layers)
+        model = Sequential()
+        model.add(Dense(self.hidden_dims[0], input_dim=self.state_size, activation=self.activations[0]))
+        for i in range(1, len(self.hidden_dims)):
+            model.add(Dense(self.hidden_dims[i], activation=self.activations[i]))
+
+        model.add(Dense(1, activation=self.activations[-1]))
 
         # Compile for training
-        model.compile(self.optimizer(lr=self.learning_rate), loss=self.loss, metrics=['accuracy'])
+        model.compile(self.optimizer(lr=self.learning_rate), loss=self.loss)
 
         return model
 
@@ -125,7 +136,7 @@ class DQNAgent:
 
         return best_state
 
-    def train(self, minibatch_size=64, epochs=3):
+    def train(self, epochs=3):
         """
         Train our neural network to estimate q-values.
         :param minibatch_size: How many samples from our memory do we want to use for training.
@@ -134,7 +145,7 @@ class DQNAgent:
         :type epochs: int
         """
         # grab mini batch of replay memory
-        if len(self.memory) < self.min_replay_memory_size:
+        if len(self.memory) < self.replay_start_size or len(self.memory) < self.minibatch_size:
             # Don't train on a super small replay memory, otherwise we risk
             # training over the same data when sampling to create our
             # minibatches
@@ -146,16 +157,15 @@ class DQNAgent:
         # Obtain the predicted q values for each state given future states
         # Note: transition is a tuple of (state, next_state, reward, done)
         new_states = np.array([transition[1] for transition in minibatch])
-        future_qs_list = [x[0] for x in self.model.predict(new_states)]
+        future_qs_list = [x[0] for x in self.target_model.predict(new_states)]
 
         X = []
         y = []
 
-        for index, (state, _, reward, done) in enumerate(minibatch):
+        for i, (state, _, reward, done) in enumerate(minibatch):
             # Update q values according to standard q-learning update rule
             if not done:
-                max_future_q = np.max(future_qs_list[index])
-                new_q = reward + self.discount * max_future_q
+                new_q = reward + self.discount * future_qs_list[i]
             # Once we hit game over state, there is no future_qs_list
             # So we just set new_q to reward
             else:
@@ -164,9 +174,13 @@ class DQNAgent:
             X.append(state)
             y.append(new_q)
 
-        self.model.fit(np.array(X), np.array(y), batch_size=self.minibatch_size, verbose=0, shuffle=False)
+        self.model.fit(np.array(X), np.array(y), batch_size=self.minibatch_size, epochs=epochs, verbose=0)
 
         # Let exploration probability decay
         if self.epsilon > self.epsilon_min:
             # self.epsilon *= self.epsilon_decay
             self.epsilon -= self.epsilon_decay
+
+        if self.target_update_counter > self.UPDATE_TARGET_EVERY:
+            self.target_model.set_weights(self.model.get_weights())
+            self.target_update_counter = 0
