@@ -11,22 +11,21 @@ MIN_SCORE = 3000
 
 def run_game():
     env = Tetris()
-    episodes = 2000
+    episodes = 2500
     max_steps = None
-    discount = 0.90
+    discount = 0.95
     replay_mem_size = 20000
-    minibatch_size = 512
+    minibatch_size = 256
     epsilon = 1
-    # epsilon_decay = 0.9975
-    # epsilon_min = 1e-3
-    epsilon_min = 0
+    epsilon_min = 0.01
     epsilon_stop_episode = 1500
     learning_rate = 1e-3
     epochs = 1
-    show_every = 0
+    show_every = 50
     log_every = 50
     replay_start_size = 2000
     train_every = 1
+    update_target_every = 10
     hidden_dims = [32, 32]
     activations = ['relu', 'relu', 'linear']
 
@@ -37,7 +36,9 @@ def run_game():
                    epsilon_min=epsilon_min, \
                    epsilon_stop_episode=epsilon_stop_episode, \
                    learning_rate=learning_rate, hidden_dims=hidden_dims, \
-                   activations=activations, replay_start_size=replay_start_size)
+                   activations=activations, \
+                   update_target_every=update_target_every, \
+                   replay_start_size=replay_start_size)
 
     log_dir = f'log/tetris-{datetime.now().strftime("%Y%m%d-%H%M%S")}-nn={str(hidden_dims)}-mem={replay_mem_size}-bs={minibatch_size}-discount={discount}'
     log = ModifiedTensorBoard(log_dir=log_dir)
@@ -46,7 +47,8 @@ def run_game():
     for episode in tqdm(range(episodes)):
         current_state = env.reset_game()
         done = False
-        log.step = 0
+        step = 0
+        log.step = episode
 
         if show_every and episode % show_every == 0:
             show = True
@@ -54,7 +56,7 @@ def run_game():
             show = False
 
         # Run the game until either game over or we've hit max number of steps
-        while not done and (not max_steps or log.step < max_steps):
+        while not done and (not max_steps or step < max_steps):
             next_states = env.get_next_states()
             best_state = agent.best_state(next_states.values())
 
@@ -68,11 +70,11 @@ def run_game():
             reward, done = env.play_game(best_action[0], best_action[1], show=show)
             if show:
                 env.show()
-            agent.update_replay_memory(current_state, next_states[best_action], reward, done)
+            agent.update_replay_memory(current_state, best_action, next_states[best_action], reward, done)
 
             # move to next timestep
             current_state = next_states[best_action]
-            log.step += 1
+            step += 1
         if show:
             env.show()
             # After game is completed, collect the final score
@@ -80,8 +82,7 @@ def run_game():
         scores.append(env.get_game_score())
         agent.target_update_counter += 1
 
-        if episode % train_every == 0:
-            agent.train(epochs=epochs)
+        agent.train(epochs=epochs)
 
         if log_every and episode % log_every == 0:
             avg_score = mean(scores[-log_every:])

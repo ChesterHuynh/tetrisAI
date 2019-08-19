@@ -9,6 +9,7 @@ from keras.callbacks import TensorBoard
 from tensorflow.summary import FileWriter
 import random
 import numpy as np
+import pdb
 from collections import deque
 
 class ModifiedTensorBoard(TensorBoard):
@@ -52,7 +53,8 @@ class DQNAgent:
                  learning_rate=1e-3, loss='mse', \
                  optimizer=Adam, hidden_dims=[32,32], \
                  activations=['relu', 'relu', 'linear'], \
-                 replay_start_size=None):
+                 replay_start_size=None, \
+                 update_target_every=5):
         if len(activations) != len(hidden_dims) + 1:
             raise Exception('The number of activations should be the number of hidden layers + 1')
         self.state_size = state_size
@@ -74,7 +76,7 @@ class DQNAgent:
         self.replay_start_size = replay_start_size
 
         self.model = self.create_model()
-        self.UPDATE_TARGET_EVERY = 5
+        self.update_target_every = update_target_every
         self.target_update_counter = 0
 
         self.target_model = self.create_model()
@@ -101,12 +103,12 @@ class DQNAgent:
 
         return model
 
-    def update_replay_memory(self, current_state, next_state, reward, done):
+    def update_replay_memory(self, current_state, action, next_state, reward, done):
         """
         Add the relevant transition information, i.e. current state, reward,
         next state, and done status, to the replay memory.
         """
-        self.memory.append([current_state, next_state, reward, done])
+        self.memory.append([current_state, action, next_state, reward, done])
 
     def get_qs(self, state):
         """
@@ -155,23 +157,23 @@ class DQNAgent:
         minibatch = random.sample(self.memory, self.minibatch_size)
 
         # Obtain the predicted q values for each state given future states
-        # Note: transition is a tuple of (state, next_state, reward, done)
-        new_states = np.array([transition[1] for transition in minibatch])
-        future_qs_list = [x[0] for x in self.target_model.predict(new_states)]
+        # Note: transition is a tuple of (state, action, next_state, reward, done)
+        next_states = np.array([transition[2] for transition in minibatch])
+        next_qs = [x[0] for x in self.target_model.predict(next_states)]
 
         X = []
         y = []
 
-        for i, (state, _, reward, done) in enumerate(minibatch):
+        for i, (current_state, action, _, reward, done) in enumerate(minibatch):
             # Update q values according to standard q-learning update rule
             if not done:
-                new_q = reward + self.discount * future_qs_list[i]
+                new_q = reward + self.discount * np.max(next_qs[i])
             # Once we hit game over state, there is no future_qs_list
             # So we just set new_q to reward
             else:
                 new_q = reward
 
-            X.append(state)
+            X.append(current_state)
             y.append(new_q)
 
         self.model.fit(np.array(X), np.array(y), batch_size=self.minibatch_size, epochs=epochs, verbose=0)
@@ -181,6 +183,6 @@ class DQNAgent:
             # self.epsilon *= self.epsilon_decay
             self.epsilon -= self.epsilon_decay
 
-        if self.target_update_counter > self.UPDATE_TARGET_EVERY:
+        if self.target_update_counter > self.update_target_every:
             self.target_model.set_weights(self.model.get_weights())
             self.target_update_counter = 0

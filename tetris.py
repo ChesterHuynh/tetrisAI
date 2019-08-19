@@ -66,7 +66,9 @@ class Tetris:
         """
         self.board = [[0] * self.GRID_WIDTH for _ in range(self.GRID_HEIGHT)]
         self.score = self.level = self.lines = 0
-        self.ind = random.randrange(len(self.pieces))
+        self.bag = list(range(len(self.pieces)))
+        random.shuffle(self.bag)
+        self.ind = self.bag.pop()
         self.piece = [row[:] for row in self.pieces[self.ind]]
         self.current_pos = {'x': self.GRID_WIDTH//2 - len(self.piece[0])//2,
                             'y': 0
@@ -190,7 +192,7 @@ class Tetris:
         curr_pos = {'x': self.current_pos['x'], 'y': self.current_pos['y']}
         if piece_id == 0: # O piece
             num_rotations = 1
-        elif piece_id == 4: # I piece
+        elif piece_id == 2 or piece_id == 3 or piece_id == 4:
             num_rotations = 2
         else:
             num_rotations = 4
@@ -233,7 +235,10 @@ class Tetris:
         """
         Generate a new piece.
         """
-        self.ind = random.randrange(len(self.pieces))
+        if not len(self.bag):
+            self.bag = list(range(len(self.pieces)))
+            random.shuffle(self.bag)
+        self.ind = self.bag.pop()
         self.piece = [row[:] for row in self.pieces[self.ind]]
         self.current_pos = {'x': self.GRID_WIDTH//2 - len(self.piece[0])//2,
                             'y': 0
@@ -346,11 +351,11 @@ class Tetris:
         score = 1
         if lines_cleared:
             score += ((lines_cleared ** 2)) * self.GRID_WIDTH
-        self.score += score
-        if self.gameover:
-            score -= 2
-        else:
+        if not self.gameover:
             self.new_piece()
+        if self.gameover:
+            self.score -= 2
+        self.score += score
         return score, self.gameover
 
     def show(self):
