@@ -105,3 +105,4 @@ venv.bak/
 
 log/
 .DS_Store
+models/
