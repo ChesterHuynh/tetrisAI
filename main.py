@@ -5,6 +5,7 @@ from statistics import mean, median
 from tqdm import tqdm
 import time
 import pdb
+import os
 import random
 
 MIN_SCORE = 3000
@@ -15,9 +16,9 @@ def run_game():
     max_steps = None
     discount = 0.95
     replay_mem_size = 20000
-    minibatch_size = 256
+    minibatch_size = 512
     epsilon = 1
-    epsilon_min = 0.01
+    epsilon_min = 0
     epsilon_stop_episode = 1500
     learning_rate = 1e-3
     epochs = 1
@@ -25,7 +26,7 @@ def run_game():
     log_every = 50
     replay_start_size = 2000
     train_every = 1
-    update_target_every = 10
+    update_target_every = 3
     hidden_dims = [32, 32]
     activations = ['relu', 'relu', 'linear']
 
@@ -66,6 +67,7 @@ def run_game():
                 if state == best_state:
                     best_action = action
                     break
+
             # reward is the score, done is gameover status
             reward, done = env.play_game(best_action[0], best_action[1], show=show)
             if show:
@@ -91,9 +93,10 @@ def run_game():
 
             log.update_stats(avg_score=avg_score, min_score=min_score, max_score=max_score)
 
-            if env.get_game_score() >= MIN_SCORE:
-                # Possible that min_reward is less than -200 because it might hit the enemy and never get the food
-                agent.model.save(f'models/nn_{str(hidden_dims)}__bs{minibatch_size}__score_{env.get_game_score()}__{int(time.time())}.model')
+        if env.get_game_score() >= MIN_SCORE:
+            if not os.path.exists('models/'):
+                os.makedirs('models/')
+            agent.model.save(f'models/eps_{str(episode)}nn_{str(hidden_dims)}__bs{minibatch_size}__score_{env.get_game_score()}__{int(time.time())}.h5')
 
 if __name__ == "__main__":
     run_game()

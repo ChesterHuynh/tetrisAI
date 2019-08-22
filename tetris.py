@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib import style
 import time
 import random
+import pdb
 
 style.use("ggplot")
 
@@ -76,7 +77,7 @@ class Tetris:
         self.gameover = False
         return self.get_state_props(self.board)
 
-    def rotate_CW(self, piece, pos):
+    def rotate_CW(self, piece):
         """
         Rotate the currently active piece clockwise
         """
@@ -84,18 +85,12 @@ class Tetris:
         num_cols_orig = num_rows_new = len(piece[0])
         rotated_array = []
 
-        if pos['x'] + len(piece) > self.GRID_WIDTH:
-            pos['x'] = self.GRID_WIDTH - len(piece)
-        if pos['y'] + len(piece[0]) > self.GRID_HEIGHT:
-            pos['y'] = self.GRID_HEIGHT - len(piece[0])
-
         for i in range(num_rows_new):
             new_row = [0] * num_cols_new
             for j in range(num_cols_new):
                 new_row[j] = piece[(num_rows_orig-1)-j][i]
             rotated_array.append(new_row)
-        piece = rotated_array
-        return piece, pos
+        return rotated_array
 
     def get_state_props(self, board):
         """
@@ -103,7 +98,7 @@ class Tetris:
         :param board: 2D list representation of board
         :type board: List[List[int]]
         """
-        lines_cleared = self.check_cleared_rows()
+        lines_cleared, board = self.check_cleared_rows(board)
         holes = self.count_holes(board)
         total_bumpiness, max_bumpiness = self.bumpiness(board)
         sum_height, max_height, min_height = self.compute_height(board)
@@ -198,17 +193,20 @@ class Tetris:
             num_rotations = 4
 
         for i in range(num_rotations):
-            curr_piece, curr_pos = self.rotate_CW(curr_piece, curr_pos)
             # Loop over all possible x values the upper left corner of the
             # piece can take
-            for x in range(self.GRID_WIDTH - len(curr_piece[0]) + 1):
+            valid_xs = self.GRID_WIDTH - len(curr_piece[0])
+            for x in range(valid_xs + 1):
+                piece = [row[:] for row in curr_piece]
                 pos = {'x': x, \
                        'y': 0}
                 # Drop the piece
-                while not self.check_collision(curr_piece, pos):
+                while not self.check_collision(piece, pos):
                     pos['y'] += 1
-                board = self.store(curr_piece, pos)
-                states[(x, i+1)] = self.get_state_props(board)
+                self.truncate(piece, pos)
+                board = self.store(piece, pos)
+                states[(x, i)] = self.get_state_props(board)
+            curr_piece = self.rotate_CW(curr_piece)
         return states
 
     def get_current_board_state(self):
@@ -254,17 +252,17 @@ class Tetris:
         :type piece: List[List[int]]
         :type pos: dict[str] = int
         """
-        last_collision_row = -1
         future_y = pos['y'] + 1
         result = False
-
         for y in range(len(piece)):
             for x in range(len(piece[y])):
-                if future_y + y > self.GRID_HEIGHT-1:
-                    result = True
-                elif self.board[future_y + y][pos['x'] + x] and piece[y][x]:
-                    result = True
+                if future_y + y > self.GRID_HEIGHT-1 or self.board[future_y + y][pos['x'] + x] and piece[y][x]:
+                    return True
+        return False
 
+    def truncate(self, piece, pos):
+        gameover = False
+        last_collision_row = -1
         for y in range(len(piece)):
             for x in range(len(piece[y])):
                 if self.board[pos['y'] + y][pos['x'] + x] and piece[y][x]:
@@ -273,18 +271,15 @@ class Tetris:
 
         # If there is overflow at the top of the board, then truncate piece and result in gameover
         if pos['y'] - (len(piece) - last_collision_row) < 0 and last_collision_row > -1:
-            while last_collision_row >= 0:
-                if len(piece) > 1:
-                    del piece[0]
-                else:
-                    self.gameover = True
-                    return result
-                last_collision_row = -1
+            while last_collision_row >= 0 and len(piece) > 1:
+                gameover = True
+                last_collision_row = -1 # Reset
+                del piece[0]
                 for y in range(len(piece)):
                     for x in range(len(piece[y])):
                         if self.board[pos['y'] + y][pos['x'] + x] and piece[y][x] and y > last_collision_row:
                             last_collision_row = y
-        return result
+        return gameover
 
     def store(self, piece, pos):
         """
@@ -302,28 +297,29 @@ class Tetris:
                     board[y+pos['y']][x+pos['x']] = piece[y][x]
         return board
 
-    def check_cleared_rows(self):
+    def check_cleared_rows(self, board):
         """
         Check for any completed rows.
         :return len(to_delete): number of rows deleted
         """
         to_delete = []
-        for i, row in enumerate(self.board[::-1]):
+        for i, row in enumerate(board[::-1]):
             if 0 not in row:
-                to_delete.append(len(self.board)-1-i)
+                to_delete.append(len(board)-1-i)
         if len(to_delete) > 0:
-            self.remove_row(to_delete)
-        return len(to_delete)
+            board = self.remove_row(board, to_delete)
+        return len(to_delete), board
 
-    def remove_row(self, indices):
+    def remove_row(self, board, indices):
         """
         Remove the rows specified by a list of indices in the gameboard
         :param indices: List of row indices to be removed
         :type indices: List[int]
         """
         for i in indices[::-1]:
-            del self.board[i]
-            self.board = [[0 for _ in range(self.GRID_WIDTH)]] + self.board
+            del board[i]
+            board = [[0 for _ in range(self.GRID_WIDTH)]] + board
+        return board
 
     def play_game(self, x, num_rotations, show=True):
         """
@@ -339,15 +335,22 @@ class Tetris:
                             'y': 0
                             }
         for _ in range(num_rotations):
-            self.piece, self.current_pos = self.rotate_CW(self.piece, self.current_pos)
+            self.piece = self.rotate_CW(self.piece)
+
+        if x + len(self.piece[0]) > 10:
+            pdb.set_trace()
         while not self.check_collision(self.piece, self.current_pos):
             self.current_pos['y'] += 1
             if show:
                 self.show()
 
+        overflow = self.truncate(self.piece, self.current_pos)
+        if overflow:
+            self.gameover = True
+
         self.board = self.store(self.piece, self.current_pos)
 
-        lines_cleared = self.check_cleared_rows()
+        lines_cleared, self.board = self.check_cleared_rows(self.board)
         score = 1
         if lines_cleared:
             score += ((lines_cleared ** 2)) * self.GRID_WIDTH
