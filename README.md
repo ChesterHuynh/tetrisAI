@@ -3,6 +3,9 @@ Standard Deep Q-learning Network approach to teach an agent how to play Tetris. 
 learning algorithm that uses the general concept of providing the agent rewards when it achieves what we want it to achieve 
 and punishments otherwise.
 
+![Demo - First 10000 points](./demo.gif)
+
+
 ### Interactive Version
 I implemented an interactive version of tetris using Pygame to better understand the game mechanics in `tetris.py`.
 You can run `$ python runinteractive.py` in command line to begin an interactive game.
