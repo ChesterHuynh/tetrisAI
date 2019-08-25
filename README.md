@@ -13,6 +13,14 @@ Specifically, the Q-learning algorithm seeks to learn a policy that maximizes th
 
 For a given state that the agent is in, the agent chooses an action either by *exploring* a random action or *exploiting* information from our table and selecting the action with the highest q-value. We control how the agent decides on its next action by tweaking the probability of taking a random action `epsilon`, which is between 0 and 1. Often you want to let the agent explore random actions when starting from scratch, keeping `epsilon` close to or equal to 1 and gradually decay to `epsilon_min`, usually 0.01 or 0.
 
+Updates on the q-values in the state-action table occur after each action and ends when an episode is completed (in this case, when a game over occurs). After each action is taken by the agent, the agent "interacts" with the environment, and the environment returns a reward in response to the action. The update rule is as follows:
+
+`Q[state, action] = Q[state,action] + lr * (reward + discount * np.max(Q[new_state,:]) - Q[state, action])`, where
+- `lr` is the learning rate, controls how much the q-value is affected by the results of the most recent action, i.e. how much you accept the new value vs. the old value. 
+- `discount` is the discount factor, which is a value between 0 and 1 that controls how strongly the agent considers future values over immediate values. From our update rule, we see that the future reward is multiplied our variable `discount`. Typically, `discount` is between 0.8 and 0.99.
+- `reward` is the value returned the environment in response to the agent taking an action.
+
+
 ### Deep Q-Learning Networks
 
 
