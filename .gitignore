@@ -106,6 +106,7 @@ venv.bak/
 log/
 .DS_Store
 models/
+tensorboard_csvs/
 best_model*.h5
 demo.mp4
 demo.py
