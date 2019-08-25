@@ -12,14 +12,12 @@ For the sake of keeping the animation short, here is the gameplay footage of rou
 I implemented an interactive version of tetris using Pygame to better understand the game mechanics in `tetris.py`.
 You can run `$ python runinteractive.py` in command line to begin an interactive game.
 
-The score for the interactive game is calculated as:
-  `score += (level // 2 + 1) * (1 + 10 * (rows_cleared ** 2)`
-and the game speed is adjusted as the level increases.
+The score for the interactive game is updated according to the following rule after each piece is placed: `score += (level // 2 + 1) * (1 + 10 * (rows_cleared ** 2)` and the game speed increases as the level increases. The player starts at level 0 and proceeds to subsequent levels after clearing 12 lines. Looking more closely at the update rule, the player gets 1 point times the level multiplier `level // 2 + 1`. When clearing lines, the player receives points equal to the board_width times the number of rows cleared squared times the level multiplier.
 
 
 ### AI Version
-For the AI, a Deep Q-Learning Network (DQN) is implemented, aiming for a goal score of 5,000 points. The AI doesn't have levels, so the score is calculated as:
-  `score += 1 + 10 * (rows_cleared ** 2)`
+For the AI, a Deep Q-Learning Network (DQN) is implemented, aiming for a goal score of 5,000 points. The AI doesn't have levels, so the score is updated according to the following rule after each piece is placed: `score += 1 + 10 * (rows_cleared ** 2)`, similar to the interactive version's score update rule.
+
 
 See how you stack up against the AI! You can run the AI version by running `$ python main.py` in command line to begin training the agent.
 
