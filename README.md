@@ -25,6 +25,14 @@ For the AI, a Deep Q-Learning Network (DQN) is implemented, aiming for a goal sc
 
 The ANN used to construct the DQN is a `Sequential` model with two hidden layers, each with 32 neurons. The activations for each of the hidden layers are `ReLU's` and the activation for the last layer is `Linear`. The loss function used was `mean squared error` for our optimizer `Adam`.
 
+The inputs to the ANN are a vector of features about the game's current state of the board. After looking at (6) in my helpful links, the most important features about the current state that helped the ANN train better were the following:
+- **`lines_cleared`**: the number of lines cleared after a certain piece was placed
+- **`holes`**: the number of holes in the board (entries that are 0 but have nonzero values above)
+- **`total_bumpiness`**: the sum of the differences in heights of adjacent columns
+- **`sum_height`**: the sum of the heights of each column
+
+The ANN would try out all possible next states of a given piece since it was given a dictionary of all possible configurations and columns that a given piece could be placed in and the associated vector of state features. Since we do not have a state-action table to look up the q-values for a given state-action pair, we use the ANN to predict the q-value of the state-action information and choose the best action based on the prediction made by the ANN.
+
 The hyperparameters that had to be tuned for the DQN were as follows:
 - `discount`: how strongly to consider future rewards over immediate ones; 0.98 is used.
 - `replay_mem_size`: number of ***<state, new_state, action, reward>*** tuples stored in the ANN's "memory"; 20000 is used.
@@ -39,6 +47,9 @@ You can review the results in TensorBoard by running `$ tensorboard --logdir=log
 
 ![Alt text](./tensorboard_plots.svg)
 
+We see that the average and max scores skyrocket once `epsilon` has decayed to 0, however, consistently across many runs, after around episode 1800, the performance drops considerably, possibly due to overfitting of the ANN. This may be avoidable if a `target_model` ANN were constructed and the agent was trained for longer, but due to each run already taking a considerably long time, I decided not to pursue this avenue.
+
+The min scores however, continually hovers around the 10-30's range, indicating that in every batch of 50 episodes, the agent has at least one run where it hardly cleared any lines before hitting game over.
 
 ## Background
 ### Vanilla Q-learning Algorithm
@@ -66,10 +77,11 @@ To get q-values to update properly in Q-network, we need something to serve as t
 In addition, the Q-network also has a ***experience replay***, which in this project is a deque of size `memory_size` and has entries of the form ***<s, s', a, r>***, where s is the current state, s' is the new state, a is the action taken to get from s to s' and r is the reward from the environment in response to the action taken. While training, to provide greater stability in how the agent learns, the agent randomly samples from its experience replay, using old and new experiences alike. 
 
 
-### Helpful Links:
-- [Sentdex's Reinforcement YouTube Series](https://www.youtube.com/watch?v=yMk_XtIEzH8)
-- [Article on the q-learning algorithm](https://towardsdatascience.com/simple-reinforcement-learning-q-learning-fcddc4b6fe56)
-- [Article on the DQN framework](https://towardsdatascience.com/self-learning-ai-agents-part-ii-deep-q-learning-b5ac60c3f47)
-- [More math on DQN's](https://towardsdatascience.com/dqn-part-1-vanilla-deep-q-networks-6eb4a00febfb)
-- [DeepMind's Deep RL/DQN Paper](https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf)
-- [Paper on CS231n Tetris AI Project](http://cs231n.stanford.edu/reports/2016/pdfs/121_Report.pdf)
+## Helpful Links:
+Here are some helpful links that I used to build better understand Q-learning and DQN's as well as helped me with the implementation.
+- (1) [Sentdex's Reinforcement YouTube Series](https://www.youtube.com/watch?v=yMk_XtIEzH8)
+- (2) [Article on the q-learning algorithm](https://towardsdatascience.com/simple-reinforcement-learning-q-learning-fcddc4b6fe56)
+- (3) [Article on the DQN framework](https://towardsdatascience.com/self-learning-ai-agents-part-ii-deep-q-learning-b5ac60c3f47)
+- (4) [More math on DQN's](https://towardsdatascience.com/dqn-part-1-vanilla-deep-q-networks-6eb4a00febfb)
+- (5) [DeepMind's Deep RL/DQN Paper](https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf)
+- (6) [Paper on CS231n Tetris AI Project](http://cs231n.stanford.edu/reports/2016/pdfs/121_Report.pdf)
