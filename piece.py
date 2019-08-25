@@ -53,6 +53,9 @@ class Piece:
         self.gridline = gridline
 
     def copy(self):
+        """
+        Create a copy of this object to avoid shallow copies
+        """
         return Piece(ind=self.ind, x=self.x, y=self.y, block_size=self.block_size, gridline=self.gridline)
 
 

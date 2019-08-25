@@ -96,6 +96,8 @@ class Tetris:
         Get properties of the current state of the board
         :param board: 2D list representation of board
         :type board: List[List[int]]
+
+        :return state vector of features about board
         """
         lines_cleared, board = self.check_cleared_rows(board)
         holes = self.count_holes(board)
@@ -109,6 +111,8 @@ class Tetris:
         We count the number of zeros below a non-zero entry.
         :param board: 2D list representation of board
         :type board: List[List[int]]
+
+        :return num_holes: number of zeros in the board with nonzero values above them
         """
         num_holes = 0
         for col in zip(*board):
@@ -123,6 +127,11 @@ class Tetris:
         We total the differences in heights between each column of the board.
         The height of a column is the nonzero value at the highest point in the
         column.
+        :param board: 2D list representation of board
+        :type board: List[List[int]]
+
+        :return total_bumpiness: sum of the differences in heights of adjacent columns
+        :return max_bumpiness: max of the differences in heights of adjacent columns
         """
         board = np.array(board)
         mask = board != 0
@@ -247,9 +256,11 @@ class Tetris:
         """
         Check if a collision occurred between the currently active piece and either the walls of the board or any placed piece.
         :param piece: a Piece array
-        :param pos: current position of the array in the board
+        :param pos: current position of the piece in the board
         :type piece: List[List[int]]
         :type pos: dict[str] = int
+
+        :return True if there is a potential collision between pieces already embedded into the board and the currently active piece.
         """
         future_y = pos['y'] + 1
         result = False
@@ -260,6 +271,16 @@ class Tetris:
         return False
 
     def truncate(self, piece, pos):
+        """
+        Truncate a piece that hits the game window ceiling. We set gameover to true
+        once a truncation occurs (because we hit the ceiling).
+        :param piece: a Piece array
+        :param pos: current position of the piece in the board
+        :type piece: List[List[int]]
+        :type pos: dict[str] = int
+
+        :return gameover: whether the game has ended or not
+        """
         gameover = False
         last_collision_row = -1
         for y in range(len(piece)):
@@ -288,6 +309,8 @@ class Tetris:
         :param pos: current position of the array in the board
         :type piece: List[List[int]]
         :type pos: dict[str] = int
+
+        :return board: updated board
         """
         board = [x[:] for x in self.board]
         for y in range(len(piece)):
@@ -300,6 +323,7 @@ class Tetris:
         """
         Check for any completed rows.
         :return len(to_delete): number of rows deleted
+        :return board: the updated board
         """
         to_delete = []
         for i, row in enumerate(board[::-1]):
@@ -314,6 +338,7 @@ class Tetris:
         Remove the rows specified by a list of indices in the gameboard
         :param indices: List of row indices to be removed
         :type indices: List[int]
+        :return board: the updated board
         """
         for i in indices[::-1]:
             del board[i]
@@ -329,6 +354,9 @@ class Tetris:
         :type x: int
         :type num_rotations: int
         :type show: Boolean
+
+        :return score: score of the game
+        :return gameover: whether or not the game ended after this action
         """
         self.current_pos = {'x': x, \
                             'y': 0
@@ -362,6 +390,8 @@ class Tetris:
     def show(self, video=None):
         """
         Display the current state of the board.
+        :param video: VideoWriter object which to write frames to record gameplay
+        :type video: cv2.VideoWriter
         """
         if not self.gameover:
             img = [self.piece_colors[p] for row in self.get_current_board_state() for p in row]
