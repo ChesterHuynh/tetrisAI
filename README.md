@@ -3,7 +3,11 @@ Standard Deep Q-learning Network approach to teach an agent how to play Tetris. 
 learning algorithm that uses the general concept of providing the agent rewards when it achieves what we want it to achieve 
 and punishments otherwise.
 
+For the sake of keeping the animation short, here is the gameplay footage of roughly the first 50,000 points of the AI.
+
 ![Demo - First 10000 points](./demo.gif)
+
+
 
 
 ### Interactive Version
