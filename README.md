@@ -9,6 +9,7 @@ For the sake of keeping the animation short, here is the gameplay footage of rou
 
 This project was done solely in **Python**. I created an interactive version of the game that utilizes the *PyGame* package as well as the AI version that utilizes the **Keras** framework and **TensorFlow** backend. 
 
+See how you stack up against the AI! You can run the AI version by running `$ python main.py` in command line to begin training the agent.
 
 ## Getting Started and Implementation
 ### Interactive Version
@@ -32,8 +33,9 @@ The hyperparameters that had to be tuned for the DQN were as follows:
 - `learning_rate`: learning rate for our optimizer `Adam`; 0.005 is used.
 - `hidden_dims`: number of hidden layers and the number of neurons in each layer; [64, 64] is used.
 
-See how you stack up against the AI! You can run the AI version by running `$ python main.py` in command line to begin training the agent.
+You can run `$ python main.py` in command line to begin training the network. Once trained, go into models and select the model with the highest score and copy it to the project root folder, naming it `best_model.h5`. Then run `$ python demo.py` to record your `best_model` playing another game.
 
+You can review the results in TensorBoard by running `$ tensorboard --logdir=log`, and you can look at the average score of every 50 iterations, max score of every 50 iterations, and min score of every 50 iterations over the course of training by opening up a browser and accessing `localhost:6006`. Here are the results from the training session from which I selected my `best_model.h5`.
 
 ## Background
 ### Vanilla Q-learning Algorithm
