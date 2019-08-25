@@ -10,7 +10,7 @@ For the sake of keeping the animation short, here is the gameplay footage of rou
 This project was done solely in **Python**. I created an interactive version of the game that utilizes the *PyGame* package as well as the AI version that utilizes the **Keras** framework and **TensorFlow** backend. 
 
 
-## Getting Started and How It Works
+## Getting Started and Implementation
 ### Interactive Version
 I implemented an interactive version of tetris using Pygame to better understand the game mechanics in `tetris.py`.
 You can run `$ python runinteractive.py` in command line to begin an interactive game.
@@ -21,6 +21,16 @@ The data structure of choice to represent the pieces were rectangular 2D lists, 
 
 ### AI Version
 For the AI, a Deep Q-Learning Network (DQN) is implemented, aiming for a goal score of 5,000 points. The AI doesn't have levels, so the score is updated according to the following rule after each piece is placed: `score += 1 + 10 * (rows_cleared ** 2)`, similar to the interactive version's score update rule. The data structure used to represent the pieces follow similarly to the interactive version as well.
+
+The ANN used to construct the DQN is a `Sequential` model with two hidden layers, each with 32 neurons. The activations for each of the hidden layers are `ReLU's` and the activation for the last layer is `Linear`. The loss function used was `mean squared error` for our optimizer `Adam`.
+
+The hyperparameters that had to be tuned for the DQN were as follows:
+- `discount`: how strongly to consider future rewards over immediate ones; 0.98 is used.
+- `replay_mem_size`: number of ***<state, new_state, action, reward>*** tuples stored in the ANN's "memory"; 20000 is used.
+- `minibatch_size`: how large the random sample from the `replay_memory` the ANN should use to train over; 512 is used.
+- `epsilon_stop_episode`: epsiode number when we reduce the exploration probability `epsilon` to `epsilon_min`; `epsilon` is set to 1, `epsilon_min` is set to 0, and `epsilon_stop_episode` is set to 75% of `episodes`.
+- `learning_rate`: learning rate for our optimizer `Adam`; 0.005 is used.
+- `hidden_dims`: number of hidden layers and the number of neurons in each layer; [64, 64] is used.
 
 See how you stack up against the AI! You can run the AI version by running `$ python main.py` in command line to begin training the agent.
 
