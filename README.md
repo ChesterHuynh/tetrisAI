@@ -11,7 +11,7 @@ For the sake of keeping the animation short, here is the gameplay footage of rou
 ### Vanilla Q-learning Algorithm
 Specifically, the Q-learning algorithm seeks to learn a policy that maximizes the total reward by interacting with the environment as well as constructing and updating a state-action table that lists all possible actions that can be taken in each possible state of the game. The table has the shape (num_states, num_actions) and each entry stores "quality values" (aka "Q-values"), which get updated as an action is committed by the agent.
 
-For a given state that the agent is in, the agent chooses an action either by *exploring* a random action or *exploiting* information from our table and selecting the action with the highest q-value.
+For a given state that the agent is in, the agent chooses an action either by *exploring* a random action or *exploiting* information from our table and selecting the action with the highest q-value. We control how the agent decides on its next action by tweaking the probability of taking a random action &epsilon.
 
 ### Deep Q-Learning Networks
 
