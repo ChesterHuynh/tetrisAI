@@ -37,7 +37,6 @@ def run_game():
                    epsilon_stop_episode=epsilon_stop_episode, \
                    learning_rate=learning_rate, hidden_dims=hidden_dims, \
                    activations=activations, \
-                   update_target_every=update_target_every, \
                    replay_start_size=replay_start_size)
 
     log_dir = f'log/tetris-{datetime.now().strftime("%Y%m%d-%H%M%S")}-nn={str(hidden_dims)}-mem={replay_mem_size}-bs={minibatch_size}-discount={discount}'
@@ -80,7 +79,6 @@ def run_game():
             # After game is completed, collect the final score
             print("Episode %d  score: %d  epsilon: %.2f" % (episode, env.get_game_score(), agent.epsilon))
         scores.append(env.get_game_score())
-        agent.target_update_counter += 1
 
         agent.train(epochs=epochs)
 
