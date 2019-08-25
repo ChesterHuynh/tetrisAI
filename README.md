@@ -38,8 +38,6 @@ You can run `$ python main.py` in command line to begin training the network. On
 You can review the results in TensorBoard by running `$ tensorboard --logdir=log`, and you can look at the average score of every 50 iterations, max score of every 50 iterations, and min score of every 50 iterations over the course of training by opening up a browser and accessing `localhost:6006`. Here are the results from the training session from which I selected my `best_model.h5`.
 
 ![Alt text](./tensorboard_plots.svg)
-<img src="./tensorboard_plots.svg">
-
 
 
 ## Background
