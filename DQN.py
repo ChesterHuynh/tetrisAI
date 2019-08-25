@@ -46,15 +46,13 @@ class ModifiedTensorBoard(TensorBoard):
 
 class DQNAgent:
 
-    def __init__(self, state_size, discount=0.95, replay_mem_size=10000, \
-                 minibatch_size=64, epsilon=1, \
-                 # epsilon_decay=0.9975, \
-                 epsilon_stop_episode=500, epsilon_min=1e-3, \
+    def __init__(self, state_size, discount=0.98, replay_mem_size=20000, \
+                 minibatch_size=512, epsilon=1, \
+                 epsilon_stop_episode=1500, epsilon_min=1e-3, \
                  learning_rate=1e-3, loss='mse', \
-                 optimizer=Adam, hidden_dims=[32,32], \
+                 optimizer=Adam, hidden_dims=[64,64], \
                  activations=['relu', 'relu', 'linear'], \
-                 replay_start_size=None, \
-                 update_target_every=5):
+                 replay_start_size=None):
         if len(activations) != len(hidden_dims) + 1:
             raise Exception('The number of activations should be the number of hidden layers + 1')
         self.state_size = state_size
@@ -63,9 +61,7 @@ class DQNAgent:
         self.minibatch_size = minibatch_size
         self.epsilon = epsilon
         self.epsilon_min = epsilon_min
-        # self.epsilon_decay = epsilon_decay
         self.epsilon_decay = (self.epsilon - self.epsilon_min) / epsilon_stop_episode
-        # self.epsilon_stop_episode = epsilon_stop_episode
         self.learning_rate = learning_rate
         self.loss = loss
         self.optimizer = optimizer
@@ -76,27 +72,18 @@ class DQNAgent:
         self.replay_start_size = replay_start_size
 
         self.model = self.create_model()
-        self.update_target_every = update_target_every
-        self.target_update_counter = 0
-
-        self.target_model = self.create_model()
-        self.target_model.set_weights(self.model.get_weights())
 
     def create_model(self):
+        """
+        Create neural network architecture.
+        """
         # Input --> ReLU --> ReLU --> Linear --> Output
-        # layers = [Dense(self.hidden_dims[0], input_dim=self.state_size, activation=self.activations[0])]
-        # for i in range(1, len(self.activations)-1):
-        #     layers.append(Dense(self.hidden_dims[i], activation=self.activations[i]))
-        # layers.append(Dense(1, activation=self.activations[-1]))
-        #
-        # model = Sequential(layers)
+        layers = [Dense(self.hidden_dims[0], input_dim=self.state_size, activation=self.activations[0])]
+        for i in range(1, len(self.activations)-1):
+            layers.append(Dense(self.hidden_dims[i], activation=self.activations[i]))
+        layers.append(Dense(1, activation=self.activations[-1]))
 
-        model = Sequential()
-        model.add(Dense(self.hidden_dims[0], input_dim=self.state_size, activation=self.activations[0]))
-        for i in range(1, len(self.hidden_dims)):
-            model.add(Dense(self.hidden_dims[i], activation=self.activations[i]))
-
-        model.add(Dense(1, activation=self.activations[-1]))
+        model = Sequential(layers)
 
         # Compile for training
         model.compile(self.optimizer(lr=self.learning_rate), loss=self.loss)
@@ -159,7 +146,7 @@ class DQNAgent:
         # Obtain the predicted q values for each state given future states
         # Note: transition is a tuple of (state, action, next_state, reward, done)
         next_states = np.array([transition[2] for transition in minibatch])
-        next_qs = [x[0] for x in self.target_model.predict(next_states)]
+        next_qs = [x[0] for x in self.model.predict(next_states)]
 
         X = []
         y = []
@@ -182,7 +169,3 @@ class DQNAgent:
         if self.epsilon > self.epsilon_min:
             # self.epsilon *= self.epsilon_decay
             self.epsilon -= self.epsilon_decay
-
-        if self.target_update_counter > self.update_target_every:
-            self.target_model.set_weights(self.model.get_weights())
-            self.target_update_counter = 0

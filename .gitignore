@@ -106,3 +106,7 @@ venv.bak/
 log/
 .DS_Store
 models/
+best_model*.h5
+demo.mp4
+demo.py
+TetrisAI.mp4

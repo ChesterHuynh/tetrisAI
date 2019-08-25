@@ -8,26 +8,25 @@ import pdb
 import os
 import random
 
-MIN_SCORE = 3000
+MIN_SCORE = 10000
 
 def run_game():
     env = Tetris()
-    episodes = 2500
+    episodes = 2000
     max_steps = None
-    discount = 0.95
+    discount = 0.98
     replay_mem_size = 20000
     minibatch_size = 512
     epsilon = 1
     epsilon_min = 0
     epsilon_stop_episode = 1500
-    learning_rate = 1e-3
+    learning_rate = 5e-3
     epochs = 1
     show_every = 50
     log_every = 50
     replay_start_size = 2000
     train_every = 1
-    update_target_every = 3
-    hidden_dims = [32, 32]
+    hidden_dims = [64, 64]
     activations = ['relu', 'relu', 'linear']
 
     agent = DQNAgent(env.get_state_size(), discount=discount, \
@@ -78,7 +77,6 @@ def run_game():
             current_state = next_states[best_action]
             step += 1
         if show:
-            env.show()
             # After game is completed, collect the final score
             print("Episode %d  score: %d  epsilon: %.2f" % (episode, env.get_game_score(), agent.epsilon))
         scores.append(env.get_game_score())

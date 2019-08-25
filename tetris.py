@@ -51,8 +51,7 @@ class Tetris:
 
     GRID_HEIGHT = 20
     GRID_WIDTH = 10
-
-    score = level = lines_cleared = 0
+    BLOCK_SIZE = 20
 
     def __init__(self):
         """
@@ -66,7 +65,7 @@ class Tetris:
         Reset a game
         """
         self.board = [[0] * self.GRID_WIDTH for _ in range(self.GRID_HEIGHT)]
-        self.score = self.level = self.lines = 0
+        self.score = 0
         self.bag = list(range(len(self.pieces)))
         random.shuffle(self.bag)
         self.ind = self.bag.pop()
@@ -321,7 +320,7 @@ class Tetris:
             board = [[0 for _ in range(self.GRID_WIDTH)]] + board
         return board
 
-    def play_game(self, x, num_rotations, show=True):
+    def play_game(self, x, num_rotations, show=True, video=None):
         """
         Given some starting x coordinate, place the piece in that column.
         :param x: x coordinate of the upper left hand corner of piece to start dropping the piece.
@@ -342,7 +341,7 @@ class Tetris:
         while not self.check_collision(self.piece, self.current_pos):
             self.current_pos['y'] += 1
             if show:
-                self.show()
+                self.show(video)
 
         overflow = self.truncate(self.piece, self.current_pos)
         if overflow:
@@ -351,17 +350,16 @@ class Tetris:
         self.board = self.store(self.piece, self.current_pos)
 
         lines_cleared, self.board = self.check_cleared_rows(self.board)
-        score = 1
-        if lines_cleared:
-            score += ((lines_cleared ** 2)) * self.GRID_WIDTH
+        score = 1 + ((lines_cleared ** 2)) * self.GRID_WIDTH
+        self.score += score
         if not self.gameover:
             self.new_piece()
         if self.gameover:
             self.score -= 2
-        self.score += score
+
         return score, self.gameover
 
-    def show(self):
+    def show(self, video=None):
         """
         Display the current state of the board.
         """
@@ -372,8 +370,12 @@ class Tetris:
         img = np.array(img).reshape((self.GRID_HEIGHT, self.GRID_WIDTH, 3)).astype(np.uint8)
         img = img[...,::-1] # Reverse each 3-tuple in place
         img = Image.fromarray(img, "RGB")
-        img = img.resize((self.GRID_WIDTH * 35, self.GRID_HEIGHT * 35))
+        img = img.resize((self.GRID_WIDTH * self.BLOCK_SIZE, self.GRID_HEIGHT * self.BLOCK_SIZE))
         img = np.array(img)
-        cv2.putText(img, str(self.score), (50, 50), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.4, color=(0,0,0))
-        cv2.imshow("Tetris", np.array(img))
+
+        winname = "Tetris"
+        cv2.putText(img, str(self.score), (50, 50), fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=1.0, color=(0,0,0))
+        if video:
+            video.write(img)
+        cv2.imshow(winname, np.array(img))
         cv2.waitKey(1)
