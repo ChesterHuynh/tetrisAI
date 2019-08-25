@@ -8,8 +8,6 @@ For the sake of keeping the animation short, here is the gameplay footage of rou
 ![Demo - First 10000 points](./demo.gif)
 
 
-
-
 ### Interactive Version
 I implemented an interactive version of tetris using Pygame to better understand the game mechanics in `tetris.py`.
 You can run `$ python runinteractive.py` in command line to begin an interactive game.
@@ -31,4 +29,5 @@ See how you stack up against the AI! You can run the AI version by running `$ py
 - [Article on the q-learning algorithm](https://towardsdatascience.com/simple-reinforcement-learning-q-learning-fcddc4b6fe56)
 - [Article on the DQN framework](https://towardsdatascience.com/self-learning-ai-agents-part-ii-deep-q-learning-b5ac60c3f47)
 - [More math on DQN's](https://towardsdatascience.com/dqn-part-1-vanilla-deep-q-networks-6eb4a00febfb)
-- [DeepMind's Deep RL Paper](https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf)
+- [DeepMind's Deep RL/DQN Paper](https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf)
+- [Paper on CS231n Tetris AI Project](https://docs.google.com/viewer?url=http%3A%2F%2Fcs231n.stanford.edu%2Freports%2F2016%2Fpdfs%2F121_Report.pdf)
