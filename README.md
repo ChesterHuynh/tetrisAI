@@ -7,7 +7,7 @@ For the sake of keeping the animation short, here is the gameplay footage of rou
 
 ![Demo - First 10000 points](./demo.gif)
 
-This project was done solely in *Python*. I created an interactive version of the game that utilizes the *PyGame* package as well as the AI version that utilizes the *Keras* framework and *TensorFlow* backend. 
+This project was done solely in **Python**. I created an interactive version of the game that utilizes the *PyGame* package as well as the AI version that utilizes the **Keras** framework and **TensorFlow** backend. 
 
 
 ## Getting Started and How It Works
@@ -29,7 +29,7 @@ See how you stack up against the AI! You can run the AI version by running `$ py
 ### Vanilla Q-learning Algorithm
 Specifically, the Q-learning algorithm seeks to learn a policy that maximizes the total reward by interacting with the environment as well as constructing and updating a state-action table that lists all possible actions that can be taken in each possible state of the game. The table has the shape (num_states, num_actions) and each entry stores "quality values" (aka "Q-values"), which get updated as an action is committed by the agent.
 
-For a given state that the agent is in, the agent chooses an action either by *exploring* a random action or *exploiting* information from our table and selecting the action with the highest q-value. We control how the agent decides on its next action by tweaking the probability of taking a random action `epsilon`, which is between 0 and 1. Often you want to let the agent explore random actions when starting from scratch, keeping `epsilon` close to or equal to 1 and gradually decay to `epsilon_min`, usually 0.01 or 0.
+For a given state that the agent is in, the agent chooses an action either by ***exploring*** a random action or ***exploiting*** information from our table and selecting the action with the highest q-value. We control how the agent decides on its next action by tweaking the probability of taking a random action `epsilon`, which is between 0 and 1. Often you want to let the agent explore random actions when starting from scratch, keeping `epsilon` close to or equal to 1 and gradually decay to `epsilon_min`, usually 0.01 or 0.
 
 Updates on the q-values in the state-action table occur after each action and ends when an episode is completed (in this case, when a game over occurs). After each action is taken by the agent, the agent "interacts" with the environment, and the environment returns a reward in response to the action. The update rule is as follows:
 
@@ -48,7 +48,7 @@ In this project, an ANN was used over a CNN since CNN's are better suited when t
 
 To get q-values to update properly in Q-network, we need something to serve as the "validation data" for our algorithm to optimize over. The `target` network serves this purpose. When the Q-network is training and updating its weights to output q-values for each possible action given various features about the state of the environment, after every `update_target_every` number of episodes, the weights of the Q-network are copied and frozen into the `target` network for the next `update_target_every` number of episodes and is used to generate our "validation data". For DQN's, we generally optimize this by minimizing *mean squared error* and update the target model every 5-10 games. 
 
-In addition, the Q-network also has a *experience replay*, which in this project is a deque of size `memory_size` and has entries of the form *<s, s', a, r>*, where s is the current state, s' is the new state, a is the action taken to get from s to s' and r is the reward from the environment in response to the action taken. While training, to provide greater stability in how the agent learns, the agent randomly samples from its experience replay, using old and new experiences alike. 
+In addition, the Q-network also has a ***experience replay***, which in this project is a deque of size `memory_size` and has entries of the form ***<s, s', a, r>***, where s is the current state, s' is the new state, a is the action taken to get from s to s' and r is the reward from the environment in response to the action taken. While training, to provide greater stability in how the agent learns, the agent randomly samples from its experience replay, using old and new experiences alike. 
 
 
 ### Helpful Links:
