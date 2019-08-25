@@ -78,7 +78,7 @@ In addition, the Q-network also has a ***experience replay***, which in this pro
 
 
 ## Helpful Links:
-Here are some helpful links that I used to build better understand Q-learning and DQN's as well as helped me with the implementation.
+Here are some helpful links that I used to build better understand Q-learning and DQN's as well as helped me with the implementation. The last three are pretty mathematically technical whereas the first three help with implementation.
 - (1) [Sentdex's Reinforcement YouTube Series](https://www.youtube.com/watch?v=yMk_XtIEzH8)
 - (2) [Article on the q-learning algorithm](https://towardsdatascience.com/simple-reinforcement-learning-q-learning-fcddc4b6fe56)
 - (3) [Article on the DQN framework](https://towardsdatascience.com/self-learning-ai-agents-part-ii-deep-q-learning-b5ac60c3f47)
