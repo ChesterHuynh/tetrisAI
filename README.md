@@ -1,13 +1,22 @@
 # TetrisAI
-Standard Deep Q-learning Network approach to teach an agent how to play Tetris. The Q-learning algorithm is a reinforcement 
+Implemented a Deep Q-learning Network to teach an agent how to play Tetris. The Q-learning algorithm is a reinforcement 
 learning algorithm that uses the general concept of providing the agent rewards when it achieves what we want it to achieve 
-and punishments otherwise.
+and punishments otherwise. 
 
 For the sake of keeping the animation short, here is the gameplay footage of roughly the first 50,000 points of the AI.
 
 ![Demo - First 10000 points](./demo.gif)
 
+## Background
+### Vanilla Q-learning Algorithm
+Specifically, the Q-learning algorithm seeks to learn a policy that maximizes the total reward by interacting with the environment as well as constructing and updating a state-action table that lists all possible actions that can be taken in each possible state of the game. The table has the shape (num_states, num_actions) and each entry stores "quality values" (aka "Q-values"), which get updated as an action is committed by the agent.
 
+For a given state that the agent is in, the agent chooses an action either by *exploring* a random action or *exploiting* information from our table and selecting the action with the highest q-value.
+
+### Deep Q-Learning Networks
+
+
+## Getting Started
 ### Interactive Version
 I implemented an interactive version of tetris using Pygame to better understand the game mechanics in `tetris.py`.
 You can run `$ python runinteractive.py` in command line to begin an interactive game.
