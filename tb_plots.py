@@ -2,7 +2,7 @@ from numpy import genfromtxt
 import matplotlib.pyplot as plt
 import pdb
 
-fig, axs = plt.subplots(1, 3, figsize=(16, 10))
+fig, axs = plt.subplots(1, 3, figsize=(20, 10))
 
 path_to_avg = './tensorboard_csvs/run-tetris-20190824-103449-nn=[64, 64]-mem=20000-bs=512-discount=0.98-tag-avg_score.csv'
 path_to_max = './tensorboard_csvs/run-tetris-20190824-103449-nn=[64, 64]-mem=20000-bs=512-discount=0.98-tag-max_score.csv'
