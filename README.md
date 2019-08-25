@@ -37,6 +37,11 @@ You can run `$ python main.py` in command line to begin training the network. On
 
 You can review the results in TensorBoard by running `$ tensorboard --logdir=log`, and you can look at the average score of every 50 iterations, max score of every 50 iterations, and min score of every 50 iterations over the course of training by opening up a browser and accessing `localhost:6006`. Here are the results from the training session from which I selected my `best_model.h5`.
 
+![Alt text](./results.svg)
+<img src="./results.svg">
+
+
+
 ## Background
 ### Vanilla Q-learning Algorithm
 Specifically, the Q-learning algorithm seeks to learn a policy that maximizes the total reward by interacting with the environment as well as constructing and updating a state-action table that lists all possible actions that can be taken in each possible state of the game. The table has the shape (num_states, num_actions) and each entry stores "quality values" (aka "Q-values"), which get updated as an action is committed by the agent.
