@@ -1,4 +1,4 @@
-# TetrisAI
+# Tetris AI
 Implemented a Deep Q-learning Network to teach an agent how to play Tetris. The Q-learning algorithm is a reinforcement 
 learning algorithm that uses the general concept of providing the agent rewards when it achieves what we want it to achieve 
 and punishments otherwise. 
