@@ -68,7 +68,7 @@ where
 
 
 ### Deep Q-Learning Networks (DQN)
-For environments with very large or infinitely large number of possible states and/or actions, using a table can be computationally expensive and usually impractical. Instead, we approximate the q-values that would be in a state-action table with an artificial neural network (ANN) or convolutional neural network (CNN). 
+For environments with very large or infinitely large number of possible states and/or actions, using a table can be computationally expensive. Instead, we approximate the q-values that would be in a state-action table with an artificial neural network (ANN) or convolutional neural network (CNN). 
 
 In this project, an ANN was used over a CNN since CNN's are better suited when the input data that must have its spatial/temporal ordering preserved, e.g. images or audio clips. To guarantee stability during training and preventing correlation between steps in a given episode, we construct two ANN's, one that is the Q-network and one that is the `target` network. 
 
