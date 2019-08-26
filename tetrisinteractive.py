@@ -9,7 +9,7 @@ class TetrisGame:
               }
 
     piece_colors = [
-        (128, 128, 128),
+        (255, 255, 255),
         (255, 0,   0  ),
         (0,   150, 0  ),
         (0,   0,   255),
@@ -252,9 +252,9 @@ class TetrisGame:
         font = pygame.font.Font(pygame.font.get_default_font(), text_size)
 
         # Render surfaces
-        score_surface = font.render("Score: " + str(self.score), True, self.grid_colors['white'])
-        lines_cleared_surface = font.render("Lines Cleared: "+str(self.lines_cleared), True, self.grid_colors['white'])
-        level_surface = font.render("Level: " + str(self.level), True, self.grid_colors['white'])
+        score_surface = font.render("Score: " + str(self.score), True, self.grid_colors['black'])
+        lines_cleared_surface = font.render("Lines Cleared: "+str(self.lines_cleared), True, self.grid_colors['black'])
+        level_surface = font.render("Level: " + str(self.level), True, self.grid_colors['black'])
 
         # Get rect objects
         score_rect = score_surface.get_rect(centerx=(config['block_size'] + config['gridline']) * (config['width'] + 3), centery = (config['block_size'] + config['gridline']) * (1))

@@ -52,7 +52,7 @@ def run_game(config):
     board.show_metrics(screen, config)
     while not board.gameover:
         config['gravity_buffer'] /= (1 + board.level//10)
-        screen.fill(colors['black'])
+        screen.fill(colors['white'])
 
         # Show HEIGHT x WIDTH grid and the active block
         board.draw(screen)
