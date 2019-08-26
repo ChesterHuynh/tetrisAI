@@ -3,7 +3,7 @@ import random
 
 class Piece:
     colors = [
-        (255, 255, 255  ), # White
+        (255, 255, 255), # White
         (255, 0,   0  ), # Red
         (54,  175, 144), # Green
         (0,   0,   255), # Blue
